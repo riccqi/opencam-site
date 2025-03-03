@@ -3,8 +3,8 @@
 @plugin "@tailwindcss/forms";
 
 @theme {
-  --font-sans: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Inter", sans-serif;
   --color-black: #121212;
   --color-blue-50: #EBEDFF;
   --color-accent-50: #EBEDFF;
@@ -20,11 +20,16 @@
 }
 /* CSS */
 :root {
-  font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: "Inter", sans-serif;
 }
 @supports (font-variation-settings: normal) {
   /* Use variable font if supported */
   :root {
-    font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: "Inter", sans-serif;
   }
+}
+
+/* Apply Inter to headings as well */
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: 'IBM Plex Sans', sans-serif;
 }
