@@ -68,7 +68,7 @@
             @click="setActiveAccordion(id)"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
-            <span>Is the app free to use?</span>
+            <span>What makes OpenCam's 4:3 aspect ratio recording special?</span>
             <svg
               style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
               class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
@@ -86,7 +86,7 @@
           </button>
           <div x-show="activeAccordion==id" x-collapse="">
             <div class="p-4 pt-2 text-zinc-500">
-              Yes, the app will be free to download on the App Store.
+              OpenCam records in native 4:3 aspect ratio using your iPhone's full sensor, giving you wider, more cinematic footage without any cropping or distortion. Unlike other apps that crop your video, OpenCam captures more of the scene while maintaining the ideal aspect ratio for content creation and social media.
             </div>
           </div>
         </div>
@@ -127,7 +127,7 @@
             </div>
           </div>
         </div> -->
-        
+
         <div
           x-data="{ id: $id('accordion') }"
           :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
