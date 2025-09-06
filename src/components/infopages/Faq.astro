@@ -6,11 +6,11 @@
       <div class="text-center lg:text-left">
         <div>
           <p
-            class="text-3xl font-medium tracking-tight sm:text-4xl"
+            class="text-3xl font-medium tracking-tight sm:text-4xl text-white"
           >
             Frequently asked questions
           </p>
-          <p class="text-base mt-4 text-zinc-500">
+          <p class="text-base mt-4 text-slate-300">
             Answers to commonly asked questions about OpenCam
           </p>
         </div>
@@ -50,7 +50,7 @@
             >
           </button>
           <div x-show="activeAccordion==id" x-collapse="">
-            <div class="p-4 pt-2 text-zinc-500">
+            <div class="p-4 pt-2 text-slate-300">
                 OpenCam is a fully native iOS app built with UIKit and SwiftUI. It uses Apple's Vision framework to control your iPhone
                 and see details about which lenses you're using. 
                 <br>
@@ -61,8 +61,8 @@
         </div> -->
         <div
           x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
+          :class="{ 'text-white': activeAccordion==id, 'text-slate-300 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-slate-300 hover:text-accent-500"
         >
           <button
             @click="setActiveAccordion(id)"
@@ -85,8 +85,9 @@
             >
           </button>
           <div x-show="activeAccordion==id" x-collapse="">
-            <div class="p-4 pt-2 text-zinc-500">
+            <div class="p-4 pt-2 text-slate-300">
               OpenCam records in native 4:3 aspect ratio using your iPhone's full sensor, giving you wider, more cinematic footage without any cropping or distortion. Unlike other apps that crop your video, OpenCam captures more of the scene while maintaining the ideal aspect ratio for content creation and social media. 
+              <br>
               <br>
               You can now just film a single video, and have more room to edit it for both vertical and horizontal formats, for platforms like YouTube, TikTok, Instagram, and more.
             </div>
@@ -94,8 +95,8 @@
         </div>
         <!-- <div
           x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
+          :class="{ 'text-white': activeAccordion==id, 'text-slate-300 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-slate-300 hover:text-accent-500"
         >
           <button
             @click="setActiveAccordion(id)"
@@ -124,7 +125,7 @@
             x-collapse=""
             style="display: none;"
           >
-            <div class="p-4 pt-2 text-zinc-500">
+            <div class="p-4 pt-2 text-slate-300">
               No. TabTab is a one-time purchase. There will be free future updates.
             </div>
           </div>
@@ -132,8 +133,8 @@
 
         <div
           x-data="{ id: $id('accordion') }"
-          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
-          class="cursor-pointer group text-zinc-600 hover:text-accent-500"
+          :class="{ 'text-white': activeAccordion==id, 'text-slate-300 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-slate-300 hover:text-accent-500"
         >
           <button
             @click="setActiveAccordion(id)"
@@ -162,7 +163,7 @@
             x-collapse=""
             style="display: none;"
           >
-            <div class="p-4 pt-2 text-zinc-500">
+            <div class="p-4 pt-2 text-slate-300">
               OpenCam does not collect any user data. Everything is processed locally on your iPhone and never sent out of your device, and all features are available offline.
             </div>
           </div>

@@ -1,0 +1,40 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout>
+  <section class="py-16">
+    <div class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8">
+      <div class="mx-auto max-w-2xl text-center mb-12">
+        <h1 class="text-4xl tracking-tight font-medium text-white md:text-5xl font-display">
+          Comparisons
+        </h1>
+        <p class="mt-4 text-lg text-slate-300 tracking-tight">
+          See how OpenCam compares to the native video recording on your iPhone.
+          <br>
+          All comparisons are done with the same video settings.
+        </p>
+      </div>
+
+      <div class="space-y-12">
+        <div class="text-center">
+          <h2 class="text-2xl font-semibold text-white mb-6">Main lens comparison (12mm)</h2>
+          <img
+            src="/Frame 25.png"
+            alt="OpenCam Comparison 1"
+            class="mx-auto max-w-full h-auto rounded-4xl"
+          />
+        </div>
+
+        <div class="text-center">
+          <h2 class="text-2xl font-semibold text-white mb-6">Telephoto lens comparison (48mm)</h2>
+          <img
+            src="/Frame 24.png"
+            alt="OpenCam Comparison 2"
+            class="mx-auto max-w-full h-auto rounded-4xl"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
