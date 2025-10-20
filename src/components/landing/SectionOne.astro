@@ -9,18 +9,24 @@
       >
       Featured by creators
       </p>
+      <p class="mt-4 text-lg text-slate-300">
+        Interested in featuring OpenCam? 
+        <a href="/press/" class="bg-orange-500 hover:bg-orange-400 text-white px-3 py-1 rounded-full transition-colors">Visit our press page</a> for media assets and contact information.
+      </p>
     </div>
 
     <div class="mt-8">
       <div
         class="relative left-1/2 w-screen max-w-none -translate-x-1/2"
         role="presentation"
+        data-video-carousel-root
       >
         <div
-          class="flex flex-nowrap gap-6 md:gap-8 overflow-x-auto px-8 md:px-12 lg:px-24 pb-4 sm:pb-6 scrollbar-hidden"
+          class="flex flex-nowrap gap-6 md:gap-8 overflow-x-auto px-8 md:px-12 lg:px-24 pb-4 sm:pb-6 scrollbar-hidden snap-x snap-mandatory"
           aria-label="Featured videos"
+          data-video-scroller
         >
-          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px]">
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
             <iframe
               width="100%"
               height="100%"
@@ -33,7 +39,7 @@
               class="rounded-lg"
             ></iframe>
           </div>
-          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px]">
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
             <iframe
               width="100%"
               height="100%"
@@ -46,7 +52,7 @@
               class="rounded-lg"
             ></iframe>
           </div>
-          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px]">
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
             <iframe
               width="100%"
               height="100%"
@@ -59,7 +65,7 @@
               class="rounded-lg"
             ></iframe>
           </div>
-          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px]">
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
             <iframe
               width="100%"
               height="100%"
@@ -72,6 +78,43 @@
               class="rounded-lg"
             ></iframe>
           </div>
+        </div>
+        <div class="mt-6 flex justify-center gap-4">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-white/20 bg-black/60 p-3 text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
+            data-video-prev
+            aria-label="Previous video"
+            disabled
+          >
+            <svg
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19 8 12l7-7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-white/20 bg-black/60 p-3 text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
+            data-video-next
+            aria-label="Next video"
+          >
+            <svg
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -223,3 +266,114 @@
     </div>
   </div>
 </section>
+<script type="module">
+  const setupCarousel = (root) => {
+    if (!root || root.dataset.carouselBound === 'true') {
+      return;
+    }
+
+    const scroller = root.querySelector('[data-video-scroller]');
+    const prevButton = root.querySelector('[data-video-prev]');
+    const nextButton = root.querySelector('[data-video-next]');
+    if (!scroller || !prevButton || !nextButton) {
+      return;
+    }
+
+    const items = Array.from(scroller.children);
+    if (items.length === 0) {
+      return;
+    }
+
+    root.dataset.carouselBound = 'true';
+
+    let positions = [];
+
+    const updatePositions = () => {
+      const rawPositions = items.map((item) => item.offsetLeft);
+      const baseOffset = rawPositions[0] ?? 0;
+      positions = rawPositions.map((pos) => pos - baseOffset);
+    };
+
+    const getActiveIndex = () => {
+      if (positions.length === 0) {
+        return 0;
+      }
+
+      const current = scroller.scrollLeft;
+      let closestIndex = 0;
+      let smallestDiff = Number.POSITIVE_INFINITY;
+
+      positions.forEach((pos, index) => {
+        const diff = Math.abs(current - pos);
+        if (diff < smallestDiff) {
+          smallestDiff = diff;
+          closestIndex = index;
+        }
+      });
+
+      return closestIndex;
+    };
+
+    const updateButtons = () => {
+      const index = getActiveIndex();
+      const atStart = scroller.scrollLeft <= 1;
+      const atEnd =
+        Math.abs(scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft) <= 1 ||
+        index >= items.length - 1;
+
+      prevButton.toggleAttribute('disabled', atStart);
+      nextButton.toggleAttribute('disabled', atEnd);
+    };
+
+    const scrollToIndex = (index) => {
+      if (index < 0 || index >= positions.length) {
+        return;
+      }
+
+      scroller.scrollTo({
+        left: positions[index],
+        behavior: 'smooth',
+      });
+    };
+
+    prevButton.addEventListener('click', () => {
+      const current = getActiveIndex();
+      const target = Math.max(0, current - 1);
+      if (target !== current) {
+        scrollToIndex(target);
+      }
+    });
+
+    nextButton.addEventListener('click', () => {
+      const current = getActiveIndex();
+      const target = Math.min(items.length - 1, current + 1);
+      if (target !== current) {
+        scrollToIndex(target);
+      }
+    });
+
+    scroller.addEventListener('scroll', () => {
+      window.requestAnimationFrame(updateButtons);
+    });
+
+    window.addEventListener('resize', () => {
+      updatePositions();
+      updateButtons();
+    });
+
+    updatePositions();
+    updateButtons();
+  };
+
+  const initCarousel = () => {
+    document
+      .querySelectorAll('[data-video-carousel-root]')
+      .forEach((root) => setupCarousel(root));
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCarousel, { once: true });
+  } else {
+    initCarousel();
+  }
+</script>
