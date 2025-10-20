@@ -45,3 +45,11 @@
 h1, h2, h3, h4, h5, h6, .font-display {
   font-family: 'IBM Plex Sans', sans-serif;
 }
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
