@@ -16,6 +16,9 @@
         </div>
         <button
           @click="open = !open"
+          :aria-expanded="open"
+          :aria-label="open ? 'Close navigation' : 'Open navigation'"
+          aria-controls="primary-navigation"
           class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-white focus:outline-none focus:text-white md:hidden">
           <svg
             class="w-6 h-6"
@@ -40,6 +43,7 @@
         </button>
       </div>
       <nav
+        id="primary-navigation"
         :class="{'flex': open, 'hidden': !open}"
         class="flex-col items-center flex-grow hidden md:pb-0 md:flex md:justify-end md:flex-row">
         <a

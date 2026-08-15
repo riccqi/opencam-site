@@ -2,13 +2,20 @@
 import BaseHead from "../components/BaseHead.astro";
 import Navigation from "../components/global/Navigation.astro";
 import Footer from "../components/global/Footer.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
 ---
 <html
   lang="en"
   class="scroll-smooth selection:bg-orange-200 selection:text-black no-touchevents hydrated"
 >
   <head>
-    <BaseHead />
+    <BaseHead {title} {description} />
   </head>
   <body class="bg-[var(--color-bg-dark)] text-white flex flex-col min-h-svh">
     <Navigation/>

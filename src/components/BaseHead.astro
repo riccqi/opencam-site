@@ -1,12 +1,36 @@
 ---
 import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "OpenCam - Open Gate Recording on iPhone",
+  description = "Record Open Gate with professional controls, using the full camera sensor. Made for content creators and filmmakers.",
+} = Astro.props;
+
+const siteOrigin = Astro.site ?? Astro.url.origin;
+const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).toString();
+const socialImageUrl = new URL("/og-image.png", siteOrigin).toString();
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "OpenCam",
+  operatingSystem: "iOS",
+  applicationCategory: "Camera and Video Software",
+  description,
+  url: canonicalUrl,
+};
 ---
 
-<title>OpenCam - Open Gate Recording on iPhone</title>
+<title>{title}</title>
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width" />
-<link rel="canonical" href="https://opencam.app/" />
+<link rel="canonical" href={canonicalUrl} />
 <meta name="author" content="Richard Qi" />
 
 <!-- Google tag (gtag.js) -->
@@ -23,23 +47,23 @@ import "../styles/global.css";
 </script>
 
 <!-- Primary Meta Tags -->
-<meta name="title" content="OpenCam - Open Gate Recording on iPhone" />
-<meta name="description" content="Record Open Gate with professional controls, using the full camera sensor. Made for content creators and filmmakers." />
+<meta name="title" content={title} />
+<meta name="description" content={description} />
 <meta name="keywords" content="opencam, open gate, 4:3 aspect ratio, apple log,iphone recording, video app, camera app, iOS, iPhone, full sensor, video recording, open gate, 4k, high quality, creator, influencer, instagram, tiktok, tools, gym toks, content creator, social media, reels, ugc, 4:3 video"/>
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://opencam.app/" />
-<meta property="og:title" content="OpenCam - Open Gate Recording on iPhone" />
-<meta property="og:description" content="Record Open Gate with professional controls, using the full camera sensor. Made for content creators and filmmakers." />
-<meta property="og:image" content="https://opencam.app/og-image.png" />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={socialImageUrl} />
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://opencam.app/" />
-<meta property="twitter:title" content="OpenCam - Open Gate Recording on iPhone" />
-<meta property="twitter:description" content="Record Open Gate with professional controls, using the full camera sensor. Made for content creators and filmmakers." />
-<meta property="twitter:image" content="https://opencam.app/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImageUrl} />
 
 <!-- Favicon -->
 <link rel="shortcut icon" href="/favicon.ico">
@@ -50,12 +74,6 @@ import "../styles/global.css";
 <link rel="mask-icon" href="/favicon.svg" color="#ffffff">
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="theme-color" content="#ffffff">
-
-<!--Ionicons -->
-<script
-  type="module"
-  src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"
-></script>
 
 <style>
   /* Inter for all text */
@@ -79,17 +97,8 @@ import "../styles/global.css";
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<!---- Alpine  -->
-<script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
+<!-- Alpine and the collapse plugin used by the navigation and FAQ -->
+<script defer src="https://unpkg.com/@alpinejs/collapse@3.15.12/dist/cdn.min.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.15.12/dist/cdn.min.js"></script>
 
-<!-- Add this after your meta tags -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "OpenCam",
-  "operatingSystem": "iOS",
-  "applicationCategory": "Camera and Video Software",
-  "description": "OpenCam enables Open Gate iPhone recording with professional controls. Record videos using the full camera sensor, perfect for content creators and social media."
-}
-</script>
+<script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>

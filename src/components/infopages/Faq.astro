@@ -30,7 +30,11 @@
           class="cursor-pointer group text-black"
         >
           <button
+            type="button"
             @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span>How does OpenCam work?</span>
@@ -49,7 +53,13 @@
                 d="M12 6v12m6-6H6"></path></svg
             >
           </button>
-          <div x-show="activeAccordion==id" x-collapse="">
+          <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
+            x-show="activeAccordion==id"
+            x-collapse=""
+          >
             <div class="p-4 pt-2 text-slate-300">
                 OpenCam is a fully native iOS app built with UIKit and SwiftUI. It uses Apple's Vision framework to control your iPhone
                 and see details about which lenses you're using. 
@@ -65,7 +75,11 @@
           class="cursor-pointer group text-slate-300 hover:text-accent-500"
         >
           <button
+            type="button"
             @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span>Why record Open Gate with OpenCam?</span>
@@ -84,7 +98,13 @@
                 d="M12 6v12m6-6H6"></path></svg
             >
           </button>
-          <div x-show="activeAccordion==id" x-collapse="">
+          <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
+            x-show="activeAccordion==id"
+            x-collapse=""
+          >
             <div class="p-4 pt-2 text-slate-300">
               OpenCam records in a true 4:3 aspect ratio using your iPhone’s full sensor — capturing more of the scene without cropping or distortion.
               <br>
@@ -103,7 +123,11 @@ With Apple Log and Open Gate recording, you’ll preserve every stop of dynamic 
           class="cursor-pointer group text-slate-300 hover:text-accent-500"
         >
           <button
+            type="button"
             @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
@@ -125,6 +149,9 @@ With Apple Log and Open Gate recording, you’ll preserve every stop of dynamic 
             >
           </button>
           <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
             x-show="activeAccordion==id"
             x-collapse=""
             style="display: none;"
@@ -141,7 +168,11 @@ With Apple Log and Open Gate recording, you’ll preserve every stop of dynamic 
           class="cursor-pointer group text-slate-300 hover:text-accent-500"
         >
           <button
+            type="button"
             @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
@@ -163,6 +194,9 @@ With Apple Log and Open Gate recording, you’ll preserve every stop of dynamic 
             >
           </button>
           <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
             x-show="activeAccordion==id"
             x-collapse=""
             style="display: none;"
