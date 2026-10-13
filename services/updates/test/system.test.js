@@ -159,3 +159,15 @@ test('general updates need no release, preserve narrow consent and require expli
  await drain(x.env,{send:async()=>{throw Error('Narrow consent must not receive general updates');}});
  assert.equal(x.row("SELECT error_code FROM deliveries WHERE kind='announcement'").error_code,'consent_scope');
 });
+
+test('reviewed legacy form consent is sendable without inventing mailbox confirmation',async()=>{
+ const x=setup();await x.signup();await x.confirm();
+ x.db.exec("UPDATE subscribers SET confirmed_at=NULL,consent_version='legacy-form-updates-owner-reviewed-2026-10-13',consent_evidence='{\"method\":\"legacy_form_single_opt_in\"}'");
+ const c=await (await x.req('/admin/campaigns',{kind:'update',key:'legacy-update-test',subject:'News',notes:'An update'})).json();
+ assert.equal((await x.req(`/admin/campaigns/${c.id}/launch`,{confirm_key:'legacy-update-test'})).status,200);
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE kind='announcement'").n,1);
+ x.db.exec("UPDATE deliveries SET status='skipped' WHERE kind='confirmation'");let sent=0;
+ await drain(x.env,{send:async()=>{sent++;return {status:'sent',messageId:'legacy-test'};}});assert.equal(sent,1);
+ assert.equal(x.row('SELECT confirmed_at FROM subscribers').confirmed_at,null);
+ const y=setup();await y.signup();await y.confirm();y.db.exec("UPDATE subscribers SET confirmed_at=NULL,consent_version='legacy-form-updates-owner-reviewed-2026-10-13',consent_evidence=NULL");const id=await y.campaign();await y.req(`/admin/campaigns/${id}/launch`,{confirm_version:'2.1.0'});assert.equal(y.row("SELECT count(*) n FROM deliveries WHERE kind='announcement'").n,0);
+});

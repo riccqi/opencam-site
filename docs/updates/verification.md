@@ -4,7 +4,7 @@ Updated 2026-10-13. Resend replaces the original SES plan; no AWS setup is requi
 
 ## Automated checks
 
-22 tests pass, including real workerd/D1 integration. GitHub CI run 38467948467
+23 JavaScript tests plus the Python import test pass, including real workerd/D1 integration. GitHub CI run 38467948467
 passed, as did the Astro build and Worker bundle. Tests cover double opt-in,
 expiry/reuse/forgery, scanner-safe GET, RFC 8058 POST, resubscribe, Turnstile and
 rate limits, admin authentication, public App Store version gating, immutable
@@ -15,7 +15,7 @@ callbacks, cross-app isolation and idempotent sending.
 ## Production infrastructure and tests
 
 - Worker `opencam-updates`: https://updates-api.opencam.app. Version
-  `f884ff16-0c8e-470c-bbf2-050f71faa01f`; D1 migrations 0001 and 0002 applied.
+  `6f01f8a9-5775-4b8b-bff0-29e41d933e01`; D1 migrations 0001 and 0002 applied.
 - Resend team `xiaochean`: owner upgraded Transactional to Pro, $20/month,
   50,000 shared emails. OpenCam has a separate domain-restricted sending key and
   webhook `bdb1d6a3-8c03-4f6b-8d3a-892104798a1d`. TabTab was not changed.
@@ -54,8 +54,10 @@ callbacks, cross-app isolation and idempotent sending.
 - Queue sends at most once per minute (cron scheduling can add delay), with a
   1,000-attempt rolling daily ceiling. This includes confirmations and tests.
   Quota is local; check TabTab and shared Resend usage before a campaign.
-- All 1,725 unique valid legacy addresses remain quarantined for historical
-  consent/opt-out review. No legacy import, mass reconfirmation or TestFlight import.
+- Owner reviewed original form consent and reported no known opt-outs. All 1,725
+  valid unique addresses were imported with legacy-consent evidence and NULL
+  confirmed_at. No confirmation or campaign emails were queued by the import.
+  No TestFlight import. See migration-report.md.
 - Move secret recovery values to the owner's password manager; choose a private
   backup-retention policy. No secret or subscriber export is committed to Git.
 

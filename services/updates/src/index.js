@@ -167,7 +167,7 @@ async function admin(req,env,path,deps) {
       await env.DB.batch([
         stmt(env,`INSERT OR IGNORE INTO deliveries(id,campaign_id,subscriber_id,kind,available_at)
           SELECT lower(hex(randomblob(32))),?,id,'announcement',? FROM subscribers
-          WHERE status='subscribed' AND confirmed_at IS NOT NULL AND (?='release' OR consent_version=?) AND (SELECT launched_at FROM campaigns WHERE id=?) IS NULL`,c.id,now(),c.campaign_type,CONSENT,c.id),
+          WHERE status='subscribed' AND (confirmed_at IS NOT NULL OR (consent_version='legacy-form-updates-owner-reviewed-2026-10-13' AND consent_evidence IS NOT NULL)) AND (?='release' OR consent_version IN (?,'legacy-form-updates-owner-reviewed-2026-10-13')) AND (SELECT launched_at FROM campaigns WHERE id=?) IS NULL`,c.id,now(),c.campaign_type,CONSENT,c.id),
         stmt(env,'UPDATE campaigns SET launched_at=?,public_verified_at=? WHERE id=? AND launched_at IS NULL',now(),c.campaign_type==='release'?now():null,c.id),
         stmt(env,'INSERT INTO admin_audit VALUES(?,?,?,?)',token(),'launch',c.id,now())
       ]);

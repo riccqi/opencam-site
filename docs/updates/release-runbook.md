@@ -1,8 +1,8 @@
 # Release-send runbook
 
 Before the first send complete deployment.md, including Resend domain verification and adequate shared account capacity,
-reply routing, simulator events and consent review. Do not send to the legacy
-quarantine. Launch is an explicit owner action; pushes, GitHub releases and TestFlight
+reply routing, simulator events and consent review. The reviewed legacy import
+is eligible; invalid source rows remain excluded. Launch is an explicit owner action; pushes, GitHub releases and TestFlight
 uploads never send email.
 
 1. Verify the version is publicly downloadable on the App Store in all intended
@@ -99,6 +99,7 @@ npm run admin -- launch CAMPAIGN_ID --update-key community-news-october-2026
 
 The key uniquely identifies immutable content; reusing it cannot create duplicate
 campaigns. General updates need no public App Store version or store link. Only
-confirmed subscribers with the broader v2 consent are eligible; older release-only
+confirmed subscribers with broader v2 consent or explicitly reviewed legacy form
+consent are eligible; older release-only
 consent is excluded at launch and checked again before sending. No existing consent
 is upgraded automatically. Existing release JSON and `--public-version` remain valid.

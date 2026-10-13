@@ -126,3 +126,11 @@ may also enforce account-level bounce/complaint suppression across both senders.
 General updates use `kind: "update"` and a unique `key` rather than a public
 version. They require explicit launch approval but no App Store lookup. Release
 campaigns keep the public-version gate. See the runbook for both formats.
+
+## Reviewed legacy starting list
+
+The owner-authorized form import contains 1,725 subscribed records with explicit
+legacy-form consent evidence and NULL mailbox-confirmation timestamps. These are
+eligible for general and release campaigns; new online signups still require
+confirmation. Existing opt-outs and suppressions are never overwritten. See
+[migration report](migration-report.md) for the audit and recovery artifacts.

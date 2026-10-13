@@ -1,69 +1,58 @@
-# Migration audit — 2026-10-13
+# Legacy form import — 2026-10-13
 
-Source: **OpenCam Waitlist (Responses)**, Google Sheet ID
-`1Y97hWn6c4QEVdIcl3CSIdD2aaHGX321Od7lKTaht4TU`, tab **Form Responses 1**.
-The connector identifies the file as private/unshared and owned in the connected
-Drive. Grid metadata: 1,905 rows, nine columns; actual CSV header has Timestamp,
-Email, and What interests you about OpenCam?. Locale en_US; timezone Asia/Kuching.
-No sheet or form was edited. The user explicitly withdrew the TestFlight-source
-request; no TestFlight export was downloaded or imported.
-
-| Classification | Count |
-| --- | ---: |
-| Response rows | 1,804 |
-| Syntactically valid rows | 1,795 |
-| Unique valid addresses | 1,725 |
-| Duplicate valid rows | 70 |
-| Invalid rows | 9 |
-| Unique addresses held for consent review | 1,725 |
-| Addresses imported / sent to | 0 / 0 |
-
-Validation is syntactic only, not proof of mailbox ownership or deliverability.
-Case and whitespace are normalized; plus tags and Gmail-style dots are preserved.
-Duplicate evidence and raw timestamps are retained. Invalid rows are identified
-by row number in the private report so the owner can review without exposing
-addresses in source control. No confirmation timestamps were invented.
-
-Current homepage form: https://forms.gle/ZFAa3WXiRgMNXFiN7, resolving to
-https://docs.google.com/forms/d/e/1FAIpQLSe-LARYiq46Uy4XMyCOM-2sH2xrAoZv3atQNxpZoBBIwQTWRw/viewform.
-On inspection its title is “Join OpenCam Email List”. Current visible wording:
-“Thanks for taking an interest in OpenCam! We’ll send the latest updates and
-exclusive offers to the email you provide.” It asks only for Email. The extra
-interest column in the export suggests the form may have changed. The current
-wording does not establish what each historical subscriber saw. We have no
-historical wording/version evidence, no mailbox confirmations and no unsubscribe
-column or historical suppression file. **Zero recorded unsubscribes in this export
-is not proof that nobody unsubscribed.**
-
-Private local backup and audit artifacts (gitignored; directory mode 0700, files
-0600):
-
-- private/updates/waitlist-original.private.csv — original connector CSV export
-- private/updates/quarantine.private.json — deduplicated addresses, row references,
-  raw timestamp evidence, invalid row numbers, no subscribed status
-- private/updates/migration-report.private.json — aggregate machine-readable audit
-
-Backup SHA-256:
+Imported the owner-authorized starting list from **OpenCam Waitlist (Responses)**,
+Sheet `1Y97hWn6c4QEVdIcl3CSIdD2aaHGX321Od7lKTaht4TU`, tab **Form Responses 1**.
+A fresh CSV export matched the original audit SHA-256:
 `73db2f7fa342397db61ab01ca951ddead3a40d20822c7fd6ce5673ccc8e1069b`.
-Keep this backup on an encrypted local volume or in an owner-controlled encrypted
-backup. Restrictive file permissions alone are not encryption. These artifacts
-have not been uploaded to Cloudflare, Resend, or any new email platform.
 
-Reproduce locally (use fresh output filenames; the tool refuses overwrites):
+| Result | Count |
+| --- | ---: |
+| Source response rows | 1,804 |
+| Unique valid addresses imported | 1,725 |
+| Duplicate valid entries excluded | 70 |
+| Invalid entries excluded | 9 |
+| Existing records overwritten | 0 |
+| Email-confirmation timestamps fabricated | 0 |
+| Emails queued or sent by import | 0 |
 
-```sh
-python3 services/updates/scripts/audit-import.py private/updates/waitlist-original.private.csv \
-  --email-column Email --timestamp-column Timestamp \
-  --report private/updates/audit-rerun.private.json \
-  --quarantine private/updates/quarantine-rerun.private.json
-```
+The owner confirmed the original wording was “latest updates and exclusive
+ offers” and reported no known opt-outs. The current form was inspected, and
+ownership by xiaochean@gmail.com was verified. This owner attestation is recorded
+as evidence; it is not represented as independent historical version evidence or
+mailbox verification.
 
-Before any import, collect the original wording/history and previous opt-outs,
-review duplicate evidence, resolve malformed records without guessing addresses,
-and decide which evidence qualifies under the required confirmed-only sending
-policy. Known opt-outs and complaints must win over any positive evidence. Do
-not mark historical entries subscribed merely because the present form mentions
-emails. A separately authorized import must preserve the source timestamp and
-consent evidence, and must not trigger confirmation sends by default. There is
-intentionally no live bulk import/reconfirmation command in this version; the
-reviewed migration is still a deployment blocker, not a completed consent check.
+Imported records have status subscribed, source legacy-google-form, consent version
+`legacy-form-updates-owner-reviewed-2026-10-13`, and NULL confirmed_at. Evidence
+records preserve original row references, raw timestamps, source hash, original
+wording, owner attestation and actual review/import-preparation time. Signup dates
+are parsed using the Sheet's verified Asia/Kuching timezone; duplicate records use
+the earliest signup and preserve every source-row timestamp. Validation is syntactic,
+not a claim that every mailbox exists.
+
+The insert-only import never updates existing addresses. Existing unsubscribe and
+suppression records take precedence. Import is repeatable without duplicates and
+cannot queue email. No TestFlight records were accessed or imported.
+
+The list resides in OpenCam's private Cloudflare D1 database. Approved campaigns
+are sent via the domain-restricted Resend API; no Resend Marketing audience was
+created. New website signups still require double opt-in. The explicit, reviewed
+legacy-consent exception supports both general updates and release campaigns without
+inventing confirmation timestamps. Release campaigns retain the App Store gate.
+
+Production verification: 1,725 legacy subscribed, one owner test unsubscribed,
+three simulator addresses suppressed, zero pending deliveries and zero launched
+campaigns. LIVE_SEND_ENABLED remains false and the postal address remains blank.
+
+Private artifacts in gitignored private/updates (directory 0700, files 0600):
+- waitlist-import-source.private.csv — fresh source export
+- before-legacy-import.private.sql — pre-import recovery backup
+- legacy-consent-evidence.private.json — owner attestation
+- legacy-import.private.sql — insert-only statements with HMAC unsubscribe hashes
+- legacy-import-report.private.json — aggregate audit and invalid row numbers
+
+Keep these on an encrypted local volume or owner-controlled encrypted backup.
+Do not restore an old backup over later opt-outs. No personal data or secret was
+committed. The reusable prepare-legacy-import.py writes private SQL only; uploading
+it is a separate authorized operation. It refuses overwrite and requires affirmative
+consent-review evidence. Its test verifies deduplication, timestamp conversion,
+preserved opt-outs, NULL confirmations, idempotency and zero queued mail.

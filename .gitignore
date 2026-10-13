@@ -28,3 +28,7 @@ pnpm-debug.log*
 private/
 *.private.csv
 *.private.json
+
+*.private.sql
+
+__pycache__/

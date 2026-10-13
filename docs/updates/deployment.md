@@ -54,7 +54,8 @@ SES/SNS/IAM setup is superseded; no AWS account is required for this system.
 ## Production gate
 
 Use only explicitly approved owner inboxes and Resend simulator recipients.
-Do not import or email the legacy waitlist during setup.
+The separately authorized, reviewed legacy import is complete (see migration-report.md).
+Do not email that list during setup or reimport without reviewing later opt-outs.
 
 1. Verify domain DNS, sender/reply routing, real Turnstile secret, webhook,
    admin authentication and D1 schema. Set an owner-provided business postal

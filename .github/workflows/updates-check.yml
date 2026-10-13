@@ -17,6 +17,7 @@ jobs:
           cache: npm
           cache-dependency-path: services/updates/package-lock.json
       - run: npm ci --prefix services/updates
+      - run: python3 services/updates/test/import_test.py
       - run: npm --prefix services/updates test
       - run: npm --prefix services/updates run check
         env:
