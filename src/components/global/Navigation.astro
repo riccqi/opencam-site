@@ -1,3 +1,7 @@
+---
+import { Image } from "astro:assets";
+import logo from "../../../public/opencam-full.png";
+---
 <section class="bg-[var(--color-bg-dark)] border-b border-gray-900">
   <div class="w-full mx-auto md:px-12 px-8 max-w-7xl lg:px-16">
     <div
@@ -9,7 +13,7 @@
           <span class="font-bold font-display">AstroSaas</span>
         </a> -->
         <div class="relative w-36 md:w-40">
-          <img src="/opencam-full.png" alt="OpenCam Logo" class="w-full" />
+          <Image src={logo} alt="OpenCam Logo" width={160} densities={[1, 2]} format="webp" loading="eager" class="w-full h-auto" />
           <a href="/" class="absolute inset-0">
             <span class="sr-only">Home</span>
           </a>

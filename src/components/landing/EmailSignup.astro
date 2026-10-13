@@ -1,10 +1,12 @@
 ---
+import { Image } from "astro:assets";
+import appIcon from "../../../public/opencam.png";
 import UpdatesForm from '../global/UpdatesForm.astro';
 const updatesEnabled = import.meta.env.PUBLIC_UPDATES_ENABLED === 'true';
 ---
 <section id="updates" aria-labelledby="updates-heading" class="py-16 sm:py-20">
   <div class="mx-auto max-w-xl px-6">
-    <img src="/opencam.png" alt="" width="64" height="64" class="rounded-2xl mb-8" />
+    <Image src={appIcon} format="webp" densities={[1, 2]} alt="" width="64" height="64" class="rounded-2xl mb-8" />
     <h2 id="updates-heading" class="text-3xl font-medium tracking-tight sm:text-4xl">Get OpenCam updates</h2>
     <p class="mt-5 text-lg text-slate-300">News, features, announcements, and releases from OpenCam. Unsubscribe anytime.</p>
     <UpdatesForm enabled={updatesEnabled} />

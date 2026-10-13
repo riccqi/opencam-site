@@ -1,0 +1,27 @@
+---
+interface Props { videoId: string; title: string }
+const { videoId, title } = Astro.props;
+---
+<div class="h-full w-full" data-video-preview data-video-id={videoId} data-video-title={title}>
+  <a href={`https://www.youtube.com/watch?v=${videoId}`} class="relative block h-full w-full overflow-hidden rounded-lg bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400" aria-label={`Play ${title}`}>
+    <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" width="480" height="360" loading="lazy" decoding="async" class="h-full w-full object-cover" />
+    <span class="absolute inset-0 flex items-center justify-center" aria-hidden="true"><span class="rounded-full bg-black/80 px-6 py-4 text-2xl text-white">▶</span></span>
+    <span class="absolute inset-x-0 bottom-0 bg-black/80 px-4 py-3 text-sm text-white">{title}</span>
+  </a>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-video-preview]').forEach((preview) => {
+    preview.querySelector('a')?.addEventListener('click', (event) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      const frame = document.createElement('iframe');
+      frame.src = `https://www.youtube-nocookie.com/embed/${preview.dataset.videoId}?autoplay=1`;
+      frame.title = preview.dataset.videoTitle || 'OpenCam video';
+      frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      frame.allowFullscreen = true;
+      frame.className = 'h-full w-full rounded-lg border-0';
+      preview.replaceChildren(frame);
+      frame.focus();
+    });
+  });
+</script>
