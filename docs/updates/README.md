@@ -1,4 +1,4 @@
-# OpenCam release emails
+# OpenCam update emails
 
 The site stays on GitHub Pages. A separate Cloudflare Worker at
 `https://updates-api.opencam.app` owns signup, double opt-in, unsubscribe,
@@ -55,8 +55,10 @@ secret/sitekey. Production signup/confirmation sending are enabled after verific
 - Confirmation outbox payloads are AES-256-GCM encrypted with DATA_KEY. Terminal
   sends clear the ciphertext; ciphertext for queued retries is retained. Pending
   signups expire after 30 days. Preserve DATA_KEY until its queue has drained.
-- Consent version `release-updates-2026-10-13` means: “An email whenever a new
-  version is available. Unsubscribe anytime.” The form also explains confirmation
+- Current consent version `opencam-updates-2026-10-13-v2` covers OpenCam news,
+  features, announcements and releases. Earlier `release-updates-2026-10-13`
+  consent stays limited to releases and is excluded from general-update sends.
+  Existing consent records are not rewritten. The form also explains confirmation
   and links the privacy policy. signup_at/source record the latest explicit
   signup attempt; confirmed_at records actual successful confirmation only.
 - Public GET requests never change subscription state. Confirmation requires a
@@ -120,3 +122,7 @@ Webhook signatures cover the exact raw body and timestamp, with a five-minute
 replay tolerance and event-ID deduplication. Only updates@opencam.app events
 affect this database. Subscription consent stays separate between apps. Resend
 may also enforce account-level bounce/complaint suppression across both senders.
+
+General updates use `kind: "update"` and a unique `key` rather than a public
+version. They require explicit launch approval but no App Store lookup. Release
+campaigns keep the public-version gate. See the runbook for both formats.

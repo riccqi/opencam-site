@@ -3,7 +3,7 @@ import { token, hash, hmac, key, email, now, equal, encrypt, escape, unsubscribe
 import { stmt, run, first, all } from './db.js';
 import { confirmation, announcement } from './mail.js';
 import { drain } from './queue.js';
-const CONSENT='release-updates-2026-10-13';
+const CONSENT='opencam-updates-2026-10-13-v2';
 const generic={message:'If this address is eligible, a confirmation email will arrive shortly. Check your inbox and spam folder.'};
 class HttpError extends Error { constructor(status,message) { super(message);this.status=status; } }
 const fail=(status,message)=>{throw new HttpError(status,message);};
@@ -59,19 +59,19 @@ async function tokenAction(req,env,action) {
   if(req.method==='GET') {
     const t=url.searchParams.get('token')||'';
     if(!/^[a-zA-Z0-9_-]{40,128}$/.test(t))return page('Invalid link','<p>Please request a new link.</p>');
-    return page(action==='confirm'?'Confirm release updates':'Unsubscribe from release updates',`<p>${action==='confirm'?'Receive an email whenever a new OpenCam version is available. Unsubscribe anytime.':'Press Unsubscribe to stop OpenCam release emails.'}</p><form method="post" action="/${action}"><input type="hidden" name="token" value="${escape(t)}"><button type="submit">${action==='confirm'?'Confirm':'Unsubscribe'}</button></form>`);
+    return page(action==='confirm'?'Confirm OpenCam updates':'Unsubscribe from OpenCam updates',`<p>${action==='confirm'?'Receive news, features, announcements, and releases from OpenCam. Unsubscribe anytime.':'Press Unsubscribe to stop OpenCam update emails.'}</p><form method="post" action="/${action}"><input type="hidden" name="token" value="${escape(t)}"><button type="submit">${action==='confirm'?'Confirm':'Unsubscribe'}</button></form>`);
   }
   const b=await body(req,2048),raw=b.token||url.searchParams.get('token')||'';
   if(!/^[a-zA-Z0-9_-]{40,128}$/.test(raw))fail(400,'Invalid link');
   if(action==='confirm') {
     const s=await first(env,`UPDATE subscribers SET status='subscribed',confirmed_at=?,unsubscribed_at=NULL,confirm_hash=NULL,confirm_expires=NULL
       WHERE confirm_hash=? AND confirm_expires>? AND status IN ('pending','unsubscribed') RETURNING id`,now(),hash(raw),now());
-    return page(s?'You’re subscribed':'Link expired or already used',s?'<p>You will receive OpenCam release updates.</p>':'<p>If you already confirmed, no action is needed. Otherwise, <a href="https://opencam.app/updates/">request a new confirmation</a>.</p>');
+    return page(s?'You’re subscribed':'Link expired or already used',s?'<p>You will receive OpenCam updates.</p>':'<p>If you already confirmed, no action is needed. Otherwise, <a href="https://opencam.app/updates/">request a new confirmation</a>.</p>');
   }
   // RFC 8058 POST has the token in the URL and List-Unsubscribe=One-Click in the form body.
   await run(env,`UPDATE subscribers SET status=CASE WHEN status='suppressed' THEN status ELSE 'unsubscribed' END,
     unsubscribed_at=COALESCE(unsubscribed_at,?),confirm_hash=NULL,confirm_expires=NULL WHERE unsubscribe_hash=?`,now(),hash(raw));
-  return page('Unsubscribed','<p>You will no longer receive OpenCam release updates at this address.</p>');
+  return page('Unsubscribed','<p>You will no longer receive OpenCam updates at this address.</p>');
 }
 async function events(req,env) {
   const raw=await rawBody(req,131072);
@@ -100,11 +100,14 @@ async function events(req,env) {
 }
 const csvCell=v=>`"${String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')}"`;
 function campaignInput(b) {
-  if(typeof b.version!=='string'||!/^\d+\.\d+(?:\.\d+)?$/.test(b.version))fail(400,'Use the public app version, for example 2.1.0');
+  const kind=b.kind||'release';
+  if(!['release','update'].includes(kind))fail(400,'Invalid campaign kind');
+  if(kind==='update' && (typeof b.key!=='string'||!/^[a-z0-9][a-z0-9-]{2,79}$/.test(b.key)))fail(400,'Provide a unique update key using lowercase letters, digits and hyphens');
+  if(kind==='release' && (typeof b.version!=='string'||!/^\d+\.\d+(?:\.\d+)?$/.test(b.version)))fail(400,'Use the public app version, for example 2.1.0');
   if(typeof b.subject!=='string'||!b.subject.trim()||b.subject.length>200||/[\r\n]/.test(b.subject))fail(400,'Invalid subject');
-  if(typeof b.notes!=='string'||!b.notes.trim()||b.notes.length>12000)fail(400,'Provide release notes (up to 12000 characters)');
-  if(typeof b.app_store_url!=='string'||!/^https:\/\/apps\.apple\.com\/(?:[a-z]{2}\/)?app\/(?:[a-zA-Z0-9-]+\/)?id6743316690$/.test(b.app_store_url))fail(400,'Use the public OpenCam App Store URL');
-  return b;
+  if(typeof b.notes!=='string'||!b.notes.trim()||b.notes.length>12000)fail(400,'Provide update text (up to 12000 characters)');
+  if(kind==='release' && (typeof b.app_store_url!=='string'||!/^https:\/\/apps\.apple\.com\/(?:[a-z]{2}\/)?app\/(?:[a-zA-Z0-9-]+\/)?id6743316690$/.test(b.app_store_url)))fail(400,'Use the public OpenCam App Store URL');
+  return {...b,campaign_type:kind,version:kind==='update'?`update:${b.key}`:b.version,app_store_url:kind==='update'?'':b.app_store_url};
 }
 async function publicRelease(env,c,fetcher) {
   const country=new URL(c.app_store_url).pathname.split('/')[1];
@@ -134,9 +137,9 @@ async function admin(req,env,path,deps) {
   }
   if(path==='/admin/campaigns'&&req.method==='POST') {
     const c=campaignInput(b),id=token();
-    await run(env,'INSERT OR IGNORE INTO campaigns(id,version,subject,notes,app_store_url,created_at) VALUES(?,?,?,?,?,?)',id,c.version,c.subject,c.notes,c.app_store_url,now());
+    await run(env,'INSERT OR IGNORE INTO campaigns(id,version,subject,notes,app_store_url,created_at,campaign_type) VALUES(?,?,?,?,?,?,?)',id,c.version,c.subject,c.notes,c.app_store_url,now(),c.campaign_type);
     const existing=await first(env,'SELECT * FROM campaigns WHERE version=?',c.version);
-    if(existing.subject!==c.subject||existing.notes!==c.notes||existing.app_store_url!==c.app_store_url)fail(409,'A different campaign already exists for this version');
+    if(existing.campaign_type!==c.campaign_type||existing.subject!==c.subject||existing.notes!==c.notes||existing.app_store_url!==c.app_store_url)fail(409,'A different campaign already exists for this version');
     return json(existing);
   }
   const match=path.match(/^\/admin\/campaigns\/([a-zA-Z0-9_-]+)\/(preview|test|launch|status)$/);
@@ -157,15 +160,15 @@ async function admin(req,env,path,deps) {
     if(action==='launch'&&req.method==='POST') {
       if(env.LIVE_SEND_ENABLED!=='true'||env.SENDING_ENABLED!=='true')fail(403,'Live sending is disabled');
       if(!env.POSTAL_ADDRESS?.trim())fail(409,'Set the sender business postal address before launching');
-      if(b.confirm_version!==c.version)fail(400,'Explicit version confirmation required');
+      if(c.campaign_type==='update' ? b.confirm_key!==c.version.slice(7) : b.confirm_version!==c.version)fail(400,'Explicit campaign key or version confirmation required');
       if(c.launched_at)return json({id:c.id,already_launched:true});
-      await publicRelease(env,c,deps.fetch||fetch);
+      if(c.campaign_type==='release')await publicRelease(env,c,deps.fetch||fetch);
       // Snapshot and launch in one transaction; only the first launch can insert recipients.
       await env.DB.batch([
         stmt(env,`INSERT OR IGNORE INTO deliveries(id,campaign_id,subscriber_id,kind,available_at)
           SELECT lower(hex(randomblob(32))),?,id,'announcement',? FROM subscribers
-          WHERE status='subscribed' AND confirmed_at IS NOT NULL AND (SELECT launched_at FROM campaigns WHERE id=?) IS NULL`,c.id,now(),c.id),
-        stmt(env,'UPDATE campaigns SET launched_at=?,public_verified_at=? WHERE id=? AND launched_at IS NULL',now(),now(),c.id),
+          WHERE status='subscribed' AND confirmed_at IS NOT NULL AND (?='release' OR consent_version=?) AND (SELECT launched_at FROM campaigns WHERE id=?) IS NULL`,c.id,now(),c.campaign_type,CONSENT,c.id),
+        stmt(env,'UPDATE campaigns SET launched_at=?,public_verified_at=? WHERE id=? AND launched_at IS NULL',now(),c.campaign_type==='release'?now():null,c.id),
         stmt(env,'INSERT INTO admin_audit VALUES(?,?,?,?)',token(),'launch',c.id,now())
       ]);
       return json({id:c.id,launched:true});

@@ -24,8 +24,8 @@ switch(command) {
  }
  case 'test':result=await (await api(`campaigns/${args[0]}/test`,{email:args[1],request_id:args[2]})).json();break;
  case 'launch':
-  if(args[1]!=='--public-version'||!args[2])throw new Error('launch CAMPAIGN_ID --public-version VERSION');
-  result=await (await api(`campaigns/${args[0]}/launch`,{confirm_version:args[2]})).json();break;
+  if(!['--public-version','--update-key'].includes(args[1])||!args[2])throw new Error('launch CAMPAIGN_ID --public-version VERSION | --update-key KEY');
+  result=await (await api(`campaigns/${args[0]}/launch`,args[1]==='--update-key'?{confirm_key:args[2]}:{confirm_version:args[2]})).json();break;
  case 'status':result=await (await api(`campaigns/${args[0]}/status`)).json();break;
  case 'resolve':result=await (await api('resolve',{id:args[0],status:args[1]})).json();break;
  case 'export': {

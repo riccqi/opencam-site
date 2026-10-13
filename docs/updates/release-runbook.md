@@ -76,3 +76,29 @@ remove them according to the retention policy. Admin mutations leave an audit
 record with an opaque target ID and no raw address. After restoring any backup,
 reconcile unsubscribes and suppressions received since that backup **before**
 re-enabling sends. Rotate exposed admin credentials immediately.
+
+## General OpenCam updates
+
+For news, feature announcements or other OpenCam updates unrelated to a release:
+
+```json
+{
+  "kind": "update",
+  "key": "community-news-october-2026",
+  "subject": "What’s new at OpenCam",
+  "notes": "Your update text here."
+}
+```
+
+Use the same create, preview, test and status commands. After supplying the postal
+address and obtaining explicit campaign approval, launch with:
+
+```sh
+npm run admin -- launch CAMPAIGN_ID --update-key community-news-october-2026
+```
+
+The key uniquely identifies immutable content; reusing it cannot create duplicate
+campaigns. General updates need no public App Store version or store link. Only
+confirmed subscribers with the broader v2 consent are eligible; older release-only
+consent is excluded at launch and checked again before sending. No existing consent
+is upgraded automatically. Existing release JSON and `--public-version` remain valid.

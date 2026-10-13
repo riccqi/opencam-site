@@ -12,7 +12,7 @@ test('real workerd + D1: signup, encrypted token, confirmation, one-click unsubs
   outboundService:async(req)=>{assert.equal(new URL(req.url).host,'challenges.cloudflare.com');return Response.json({success:true,hostname:'opencam.app',action:'signup'});}}));
  try {
   const db=await mf.getD1Database('DB');
-  const sql=readFileSync(new URL('../migrations/0001_initial.sql',import.meta.url),'utf8');
+  const sql=['0001_initial.sql','0002_general_updates.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n');
   for(const statement of sql.split(';').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
   const request=(path,data,headers={})=>mf.dispatchFetch(`${bindings.API_ORIGIN}${path}`,{method:data===undefined?'GET':'POST',headers:{origin:bindings.SITE_ORIGIN,'content-type':'application/json',...headers},...(data===undefined?{}:{body:JSON.stringify(data)})});
   let r=await request('/signup',{email:'runtime@example.com',turnstile:'test',source:'testflight'});assert.equal(r.status,202,await r.text());

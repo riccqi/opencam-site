@@ -1,15 +1,18 @@
 import { escape, email } from './security.js';
 export function announcement(c, url, postalAddress='') {
+  const heading=c.campaign_type==='update'?c.subject:`OpenCam ${c.version}`;
+  const download=c.campaign_type==='update'?'':`\n\nDownload: ${c.app_store_url}`;
+  const downloadHtml=c.campaign_type==='update'?'':`<p><a href="${escape(c.app_store_url)}">Get OpenCam on the App Store</a></p>`;
   return {
     subject: c.subject,
-    text: `OpenCam ${c.version}\n\n${c.notes}\n\nDownload: ${c.app_store_url}\n\nYou requested OpenCam release updates.\nUnsubscribe: ${url}\nPrivacy: https://opencam.app/privacy/${postalAddress ? `\n${postalAddress}` : ''}`,
-    html: `<h1>OpenCam ${escape(c.version)}</h1><p>${escape(c.notes).replace(/\n/g,'<br>')}</p><p><a href="${escape(c.app_store_url)}">Get OpenCam on the App Store</a></p><p>You requested OpenCam release updates. <a href="${escape(url)}">Unsubscribe</a> · <a href="https://opencam.app/privacy/">Privacy</a></p>${postalAddress ? `<p>${escape(postalAddress)}</p>` : ''}`,
+    text: `${heading}\n\n${c.notes}${download}\n\nYou requested OpenCam updates.\nUnsubscribe: ${url}\nPrivacy: https://opencam.app/privacy/${postalAddress ? `\n${postalAddress}` : ''}`,
+    html: `<h1>${escape(heading)}</h1><p>${escape(c.notes).replace(/\n/g,'<br>')}</p>${downloadHtml}<p>You requested OpenCam updates. <a href="${escape(url)}">Unsubscribe</a> · <a href="https://opencam.app/privacy/">Privacy</a></p>${postalAddress ? `<p>${escape(postalAddress)}</p>` : ''}`,
     unsubscribe: url
   };
 }
 export function confirmation(env, t) {
   const url = `${env.API_ORIGIN}/confirm?token=${t}`;
-  return {subject:'Confirm your OpenCam release updates', text:`Confirm your email to receive OpenCam release updates:\n${url}\n\nThis link expires in 24 hours. Open the link and press Confirm. If you did not request this, ignore this email.\nPrivacy: https://opencam.app/privacy/`, html:`<h1>Get OpenCam release updates</h1><p><a href="${escape(url)}">Review and confirm your subscription</a></p><p>Expires in 24 hours. If you did not request this, ignore this email.</p><p><a href="https://opencam.app/privacy/">Privacy</a></p>`};
+  return {subject:'Confirm your OpenCam updates', text:`Confirm your email to receive OpenCam updates:\n${url}\n\nThis link expires in 24 hours. Open the link and press Confirm. If you did not request this, ignore this email.\nPrivacy: https://opencam.app/privacy/`, html:`<h1>Get OpenCam updates</h1><p><a href="${escape(url)}">Review and confirm your subscription</a></p><p>Expires in 24 hours. If you did not request this, ignore this email.</p><p><a href="https://opencam.app/privacy/">Privacy</a></p>`};
 }
 // Stable provider idempotency key supplements the durable outbox; uncertain sends stay held.
 export async function sendResend(env, recipient, message, deliveryId, fetcher = fetch) {

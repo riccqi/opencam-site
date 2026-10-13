@@ -29,6 +29,7 @@ export async function drain(env, deps = {}) {
     if (!s || s.status !== 'subscribed') return skip('not_subscribed');
     const c = await first(env,'SELECT * FROM campaigns WHERE id=? AND launched_at IS NOT NULL',d.campaign_id);
     if (!c) return skip('not_launched');
+    if(c.campaign_type==='update' && s.consent_version!=='opencam-updates-2026-10-13-v2')return skip('consent_scope');
     recipient=s.email; message=announcement(c,`${env.API_ORIGIN}/unsubscribe?token=${unsubscribeToken(env,s.id)}`,env.POSTAL_ADDRESS);
   } else {
     const payload=decrypt(env,d.payload);

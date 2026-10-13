@@ -8,7 +8,7 @@ import {drain} from '../src/queue.js';
 import {hash,now,decrypt,unsubscribeToken,email} from '../src/security.js';
 import {sendResend,announcement} from '../src/mail.js';
 function setup() {
- const db=new DatabaseSync(':memory:');db.exec(readFileSync(new URL('../migrations/0001_initial.sql',import.meta.url),'utf8'));
+ const db=new DatabaseSync(':memory:');db.exec(['0001_initial.sql','0002_general_updates.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n'));
  const DB={prepare(sql){return {bind(...args){return {async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}};},async first(){return db.prepare(sql).get(...args)||null;},async all(){return {results:db.prepare(sql).all(...args)};}};} };},async batch(statements){db.exec('BEGIN');try{const result=[];for(const s of statements)result.push(await s.run());db.exec('COMMIT');return result;}catch(e){db.exec('ROLLBACK');throw e;}}};
  const env={DB,POSTAL_ADDRESS:'Test postal address',ADMIN_TOKEN:'a'.repeat(40),TOKEN_KEY:'ab'.repeat(32),DATA_KEY:'cd'.repeat(32),RATE_KEY:'ef'.repeat(32),SITE_ORIGIN:'https://opencam.app',API_ORIGIN:'https://updates-api.opencam.app',RESEND_WEBHOOK_SECRET:'whsec_'+Buffer.alloc(32,7).toString('base64'),SIGNUPS_ENABLED:'true',SENDING_ENABLED:'true',LIVE_SEND_ENABLED:'true',DAILY_SEND_LIMIT:'100',TURNSTILE_SECRET:'test',TURNSTILE_HOSTNAME:'opencam.app',TEST_RECIPIENTS:'delivered@resend.dev',REPLY_TO:'richard@opencam.app',RESEND_API_KEY:'test-key'};
  const fetcher=async(url)=>{
@@ -140,3 +140,22 @@ test('Resend idempotency, unsubscribe headers, escaping and ambiguous provider r
 test('malformed email rejects injection without removing plus tags',()=>{assert.equal(email('a+b@example.com'),'a+b@example.com');for(const s of ['a\nb@example.com','.a@example.com','a..b@example.com','a@-bad.com','a@example..com'])assert.equal(email(s),null);});
 
 test('release launch requires a configured sender postal address',async()=>{const x=setup();const id=await x.campaign();delete x.env.POSTAL_ADDRESS;assert.equal((await x.req(`/admin/campaigns/${id}/launch`,{confirm_version:'2.1.0'})).status,409);});
+
+test('general updates need no release, preserve narrow consent and require explicit key',async()=>{
+ const x=setup();await x.signup();await x.confirm();
+ await x.signup('legacy@example.com');await x.confirm();
+ x.db.exec("UPDATE subscribers SET consent_version='release-updates-2026-10-13' WHERE email='legacy@example.com'");
+ const input={kind:'update',key:'community-news-october',subject:'Community news',notes:'An OpenCam update without a release.'};
+ const created=await x.req('/admin/campaigns',input);assert.equal(created.status,200);const c=await created.json();
+ assert.equal(c.campaign_type,'update');assert.equal(c.app_store_url,'');
+ const preview=await (await x.req(`/admin/campaigns/${c.id}/preview`)).json();assert.match(preview.html,/<h1>Community news<\/h1>/);assert.doesNotMatch(preview.text,/Download:|update:community/);
+ assert.equal((await x.req(`/admin/campaigns/${c.id}/launch`,{confirm_version:c.version})).status,400);
+ assert.equal((await x.req(`/admin/campaigns/${c.id}/launch`,{confirm_key:input.key})).status,200);
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE kind='announcement'").n,1);
+ assert.equal(x.row('SELECT public_verified_at FROM campaigns').public_verified_at,null);
+ assert.equal((await x.req(`/admin/campaigns/${c.id}/launch`,{confirm_key:input.key})).status,200);
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE kind='announcement'").n,1);
+ x.db.exec("UPDATE subscribers SET consent_version='release-updates-2026-10-13' WHERE email='person@example.com'; UPDATE deliveries SET status='skipped' WHERE kind='confirmation'");
+ await drain(x.env,{send:async()=>{throw Error('Narrow consent must not receive general updates');}});
+ assert.equal(x.row("SELECT error_code FROM deliveries WHERE kind='announcement'").error_code,'consent_scope');
+});
