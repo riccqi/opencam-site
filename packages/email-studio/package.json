@@ -1,0 +1,1 @@
+{"name":"@riccqi/email-studio","version":"1.0.0","type":"module","exports":{"./ui":"./ui.js","./template":"./template.js"},"files":["ui.js","template.js"],"dependencies":{"marked":"^17.0.0"}}
