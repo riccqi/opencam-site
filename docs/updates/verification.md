@@ -149,7 +149,11 @@ Exact-value scans found no current stored credentials (including the shared stud
 credential) in 316 OpenCam / 650 TabTab Git-history blobs or either workspace's
 public HTML/JavaScript. This does not prove no historical unknown secret exists.
 `npm audit --omit=dev` reported zero vulnerabilities for both email backends.
-The full TabTab dependency audit reports 11 development/build-tool advisories
-(1 critical, 7 high, 3 moderate), including Astro image processing. These are
-separate from the deployed Worker dependency graph and still need maintenance;
-this review does not certify every website build/development dependency.
+The subsequent build-tool maintenance pass updated both websites to Astro 7.3.8
+and refreshed compatible locked dependencies. A scoped Tailwind Typography
+override pins postcss-selector-parser 7.1.6 to fix its CPU-exhaustion advisory
+without downgrading Typography. Both full npm audits now report zero known
+vulnerabilities, including development dependencies. OpenCam builds all six routes;
+TabTab passes all 16 email tests, Astro diagnostics, its seven-page build and route/
+sitemap validation. This records known-advisory checks, not a guarantee against
+undiscovered vulnerabilities.
