@@ -6,6 +6,14 @@ single-use. The secure, HTTP-only session lasts seven days. Signing out revokes 
 These owner login emails are separate from subscriber signup, which still sends
 no confirmation email.
 
+## Switch apps
+
+Use the OpenCam / TabTab switcher on the sign-in page or sidebar. It saves the
+current draft before leaving and stops if saving fails. Each app keeps its own
+session: OpenCam codes go to opencamapp@gmail.com, TabTab codes to
+xiaochean@gmail.com. Once signed into both, switching reuses those sessions.
+Switching does not copy contacts, drafts, credentials or settings between apps.
+
 ## Write and send
 
 1. Choose **Write an update**. Enter a subject, optional inbox preview text, and
@@ -31,10 +39,9 @@ login, settings, suppression records and campaign delivery backend.
 
 ## Shared code
 
-Both deployed Workers use `@riccqi/email-studio` version 1.0.0 from
+Both deployed Workers use `@riccqi/email-studio` version 1.0.1 from
 `packages/email-studio`. OpenCam installs the committed local release tarball;
-TabTab pins that same tarball at immutable commit
-`0bac35951267d81f2393413c5c8f53c05290233b`. See the package README for updates.
+TabTab pins that same tarball at an immutable GitHub commit URL in its package lockfile. See the package README for updates.
 The shared code contains no credentials or subscriber data. It provides the
 branded UI and safe Markdown email renderer; each Worker implements the API.
 
