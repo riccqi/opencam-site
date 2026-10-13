@@ -66,6 +66,7 @@ test('bundled dashboard browser script routes each workspace to its own API',asy
    const elements=new Map(),requests=[];
    runInNewContext(source,{document:{getElementById(id){if(!elements.has(id))elements.set(id,{});return elements.get(id);},querySelectorAll(){return [];},visibilityState:'visible'},window:{addEventListener(){}},setInterval(){},AbortSignal,fetch(url,options){requests.push({url,options});return new Promise(()=>{});}});
    assert.equal(requests.length,1);assert.equal(requests[0].url,app==='tabtab'?'/dashboard/api/tabtab/overview':'/dashboard/api/overview');assert.equal(requests[0].options.headers['X-OpenCam-Dashboard'],'1');
+   elements.get('daily-limit').onchange();assert.equal(elements.get('paid-confirm-label').hidden,true);
    elements.get('login-form').onsubmit({preventDefault(){}});
    assert.equal(requests[1].url,'/dashboard/api/login');
   }
