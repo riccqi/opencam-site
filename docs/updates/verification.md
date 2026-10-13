@@ -94,3 +94,11 @@ single use, secure cookies, CSRF rejection, rate limits, saved drafts, safe prev
 exact-content test requirements, footer invalidation, immutable launches and
 pause/resume. Production sign-in email arrived in the owner inbox. No subscriber
 campaign is launched during dashboard setup.
+
+Production browser verification on 2026-10-13 confirmed owner sign-in, saving a
+Markdown draft, desktop/mobile and plain-text previews, and the 1,725-recipient
+review dialog with typed-subject confirmation. The owner-only `[TEST] Dashboard
+setup test — OpenCam` arrived in opencamapp@gmail.com with SPF, DKIM and DMARC
+passing. It includes the configured postal address and a preview-only unsubscribe
+link; subscriber sends use individual unsubscribe links. The setup draft remains
+unsent. Both GitHub Actions checks for e2b079b passed.
