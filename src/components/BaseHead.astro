@@ -15,15 +15,22 @@ const siteOrigin = Astro.site ?? Astro.url.origin;
 const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).toString();
 const socialImageUrl = new URL("/og-image.png", siteOrigin).toString();
 
-const structuredData = {
+const structuredData = [{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "OpenCam",
+  url: new URL("/", siteOrigin).href,
+}, {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "OpenCam",
-  operatingSystem: "iOS",
-  applicationCategory: "Camera and Video Software",
+  operatingSystem: "iOS 17 or later",
+  applicationCategory: "MultimediaApplication",
   description,
-  url: canonicalUrl,
-};
+  url: new URL("/", siteOrigin).href,
+  image: socialImageUrl,
+  downloadUrl: "https://apps.apple.com/us/app/opencam-open-gate-camera/id6743316690",
+}];
 ---
 
 <title>{title}</title>
@@ -49,9 +56,11 @@ const structuredData = {
 <!-- Primary Meta Tags -->
 <meta name="title" content={title} />
 <meta name="description" content={description} />
-<meta name="keywords" content="opencam, open gate, 4:3 aspect ratio, apple log,iphone recording, video app, camera app, iOS, iPhone, full sensor, video recording, open gate, 4k, high quality, creator, influencer, instagram, tiktok, tools, gym toks, content creator, social media, reels, ugc, 4:3 video"/>
 
 <!-- Open Graph / Facebook -->
+<meta property="og:site_name" content="OpenCam" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:image:alt" content="OpenCam — Open Gate video recording on iPhone" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content={canonicalUrl} />
 <meta property="og:title" content={title} />
@@ -67,30 +76,15 @@ const structuredData = {
 
 <!-- Favicon -->
 <link rel="shortcut icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <!-- <link rel="manifest" href="/site.webmanifest"> -->
 <link rel="mask-icon" href="/favicon.svg" color="#ffffff">
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="theme-color" content="#ffffff">
 
-<style>
-  /* Inter for all text */
-  @font-face {
-    font-family: 'Inter';
-    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap');
-    font-weight: normal;
-    font-style: normal;
-  }
-  
-  @font-face {
-    font-family: 'Inter';
-    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap');
-    font-weight: 600;
-    font-style: normal;
-  }
-</style>
+
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,4 +95,4 @@ const structuredData = {
 <script defer src="https://unpkg.com/@alpinejs/collapse@3.15.12/dist/cdn.min.js"></script>
 <script defer src="https://unpkg.com/alpinejs@3.15.12/dist/cdn.min.js"></script>
 
-<script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>
+{Astro.url.pathname === "/" && <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />}

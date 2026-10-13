@@ -1,4 +1,7 @@
 ---
+import { Image } from "astro:assets";
+import mainComparison from "../../public/com-1.png";
+import telephotoComparison from "../../public/com-2.png";
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
@@ -10,7 +13,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <div class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8">
       <div class="mx-auto max-w-2xl text-center mb-12">
         <h1 class="text-4xl tracking-tight font-medium text-white md:text-5xl font-display">
-          Comparisons
+          OpenCam vs iPhone Camera
         </h1>
         <p class="mt-4 text-lg text-slate-300 tracking-tight">
           See how OpenCam compares to the native video recording on your iPhone.
@@ -23,9 +26,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <div class="text-center">
           <h2 class="text-2xl font-semibold text-white mb-2">Main lens comparison (12mm)</h2>
           <p class="text-slate-300 mb-6"> Shot on iPhone 14 Pro, both using the 1x lens.</p>
-          <img
-            src="/com-1.png"
-            alt="OpenCam Comparison 1"
+          <Image
+            src={mainComparison}
+            alt="OpenCam Open Gate and native iPhone video field of view using the 1x lens"
+            widths={[480, 960, 1920]} sizes="(max-width: 1280px) calc(100vw - 64px), 1088px" format="webp"
             class="mx-auto max-w-full h-auto rounded-3xl"
           />
         </div>
@@ -33,9 +37,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <div class="text-center">
           <h2 class="text-2xl font-semibold text-white mb-2">Telephoto lens comparison (77mm)</h2>
           <p class="text-slate-300 mb-6"> Shot on iPhone 14 Pro, both using the 3x lens.</p>
-          <img
-            src="/com-2.png"
-            alt="OpenCam Comparison 2"
+          <Image
+            src={telephotoComparison}
+            alt="OpenCam Open Gate and native iPhone video field of view using the 3x telephoto lens"
+            widths={[480, 960, 1920]} sizes="(max-width: 1280px) calc(100vw - 64px), 1088px" format="webp"
             class="mx-auto max-w-full h-auto rounded-3xl"
           />
         </div>

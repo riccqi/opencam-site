@@ -1,8 +1,13 @@
+---
+import { Image } from "astro:assets";
+import hero from "../../../public/hero.png";
+---
 <section>
   <div
     class="mx-auto w-full lg:px-24 max-w-7xl md:px-8 items-center px-8 pb-8">
     <div class="text-center max-w-4xl mx-auto mt-12">
-      <p
+      <h1
+        style="font-family: Inter, sans-serif"
         class="text-5xl tracking-tight font-bold text-zinc-100 md:text-6xl">
         Open Gate Recording <br>
         <span class="flex items-center justify-center gap-4">
@@ -17,7 +22,7 @@
             iPhone
           </span>
         </span>
-      </p>
+      </h1>
 
       <!-- Star Rating -->
      
@@ -68,7 +73,7 @@
 
     <div class="relative max-w-3xl mx-auto items-center py-12 pb-12">
       <div class="rounded-xl">
-        <img src="/hero.png" alt="OpenCam Hero" class="w-full max-w-3xl object-contain mx-auto">
+        <Image src={hero} alt="OpenCam camera interface for Open Gate video recording on iPhone" widths={[384, 768, 1536]} sizes="(max-width: 832px) calc(100vw - 64px), 768px" format="webp" loading="eager" fetchpriority="high" class="w-full h-auto max-w-3xl object-contain mx-auto" />
       </div>
     </div>
   </div>
