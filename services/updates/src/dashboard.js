@@ -6,7 +6,7 @@ import {sendResend,announcement} from './mail.js';
 const workspaceLinks=[{name:'OpenCam',url:'/dashboard?app=opencam'},{name:'TabTab',url:'/dashboard?app=tabtab'}];
 const shared={workspaceLinks,authBase:'/dashboard/api',authHeader:'X-OpenCam-Dashboard',signInEmail:'opencamapp@gmail.com'};
 export const studio=createDashboard({...shared,name:'OpenCam',domain:'opencam.app',initial:'O',color:'#d45a0b',sources:'OpenCam website signups and your reviewed starting list.',uncapped:true,markdownLimit:12000,assetQuery:'?app=opencam'});
-export const tabtabStudio=createDashboard({...shared,uncapped:true,perMinute:6,apiBase:'/dashboard/api/tabtab',assetQuery:'?app=tabtab'});
+export const tabtabStudio=createDashboard({...shared,uncapped:true,apiBase:'/dashboard/api/tabtab',assetQuery:'?app=tabtab'});
 const json=x=>Response.json(x);
 const bad=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const cookie=v=>`__Host-opencam_session=${v}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${v?604800:0}`;
