@@ -7,8 +7,7 @@ const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
 {enabled ? <form id="updates-form" data-api={api} class="mt-8 space-y-5">
       <div>
         <label for="updates-email" class="block mb-2 font-medium">Email address</label>
-        <input id="updates-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="email-help updates-status" class="w-full rounded-lg border border-slate-500 bg-transparent px-4 py-3 focus:ring-2 focus:ring-orange-400" />
-        <p id="email-help" class="mt-2 text-sm text-slate-300">Subscribe for occasional OpenCam emails. Unsubscribe anytime.</p>
+        <input id="updates-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="updates-status" class="w-full rounded-lg border border-slate-500 bg-transparent px-4 py-3 focus:ring-2 focus:ring-orange-400" />
       </div>
       <div class="hidden" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off" /></label></div>
       <div class="cf-turnstile" data-sitekey={sitekey} data-action="signup"></div>
