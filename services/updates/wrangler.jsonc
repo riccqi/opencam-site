@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "opencam-updates",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "updates-api.opencam.app", "custom_domain": true }],
+  "d1_databases": [{ "binding": "DB", "database_name": "opencam-updates", "database_id": "5ee8febb-7928-4855-b0a6-85c41e2b5c53", "migrations_dir": "migrations" }],
+  "triggers": { "crons": ["* * * * *"] },
+  "observability": { "enabled": false },
+  "vars": {
+    "SITE_ORIGIN": "https://opencam.app",
+    "API_ORIGIN": "https://updates-api.opencam.app",
+    "REPLY_TO": "richard@opencam.app",
+    "TURNSTILE_HOSTNAME": "opencam.app",
+    "SIGNUPS_ENABLED": "true",
+    "SENDING_ENABLED": "true",
+    "LIVE_SEND_ENABLED": "false",
+    "DAILY_SEND_LIMIT": "20",
+    "TEST_RECIPIENTS": "xiaochean@gmail.com,opencamapp@gmail.com,delivered@resend.dev,bounced@resend.dev,complained@resend.dev,suppressed@resend.dev"
+  }
+}

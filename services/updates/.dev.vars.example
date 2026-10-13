@@ -1,0 +1,9 @@
+# Copy to .dev.vars (ignored). Never use PUBLIC_ for a secret.
+ADMIN_TOKEN=replace-with-at-least-32-random-bytes
+TOKEN_KEY=replace-with-64-hex-characters
+DATA_KEY=replace-with-64-hex-characters
+RATE_KEY=replace-with-64-hex-characters
+TURNSTILE_SECRET=replace-with-turnstile-secret
+RESEND_API_KEY=replace-with-domain-restricted-sending-key
+RESEND_WEBHOOK_SECRET=replace-with-webhook-signing-secret
+POSTAL_ADDRESS=

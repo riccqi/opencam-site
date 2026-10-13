@@ -18,3 +18,13 @@ pnpm-debug.log*
 
 # macOS-specific files
 .DS_Store
+
+# Release email secrets, local D1, and personal migration/export data
+.env.*
+!.env.example
+.dev.vars*
+!.dev.vars.example
+.wrangler/
+private/
+*.private.csv
+*.private.json

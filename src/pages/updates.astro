@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const enabled = import.meta.env.PUBLIC_UPDATES_ENABLED === 'true' || import.meta.env.PUBLIC_UPDATES_FORM_ENABLED === 'true';
+const api = import.meta.env.PUBLIC_UPDATES_API || 'https://updates-api.opencam.app';
+const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
+---
+<BaseLayout title="Release updates | OpenCam" description="Get an email whenever a new OpenCam version is available. Unsubscribe anytime.">
+  <section class="mx-auto max-w-xl px-6 pt-40 pb-24">
+    <img src="/opencam.png" alt="" width="64" height="64" class="rounded-2xl mb-8" />
+    <h1 class="text-4xl font-medium tracking-tight">Get OpenCam release updates</h1>
+    <p class="mt-5 text-lg text-slate-300">An email whenever a new version is available. Unsubscribe anytime.</p>
+    {enabled ? <form id="updates-form" data-api={api} class="mt-8 space-y-5">
+      <div>
+        <label for="updates-email" class="block mb-2 font-medium">Email address</label>
+        <input id="updates-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="email-help updates-status" class="w-full rounded-lg border border-slate-500 bg-transparent px-4 py-3 focus:ring-2 focus:ring-orange-400" />
+        <p id="email-help" class="mt-2 text-sm text-slate-300">We’ll send a confirmation link. No account needed.</p>
+      </div>
+      <div class="hidden" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off" /></label></div>
+      <div class="cf-turnstile" data-sitekey={sitekey} data-action="signup" data-theme="dark" data-size="flexible"></div>
+      <p class="text-sm text-slate-300">By confirming your email, you agree to receive OpenCam release updates. Read our <a href="/privacy/" class="underline focus-visible:outline-orange-400">privacy policy</a>.</p>
+      <button type="submit" class="rounded-full bg-orange-500 hover:bg-orange-400 disabled:opacity-50 px-6 py-3 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400">Send confirmation email</button>
+      <p id="updates-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" class="text-slate-200"></p>
+      <noscript><p>JavaScript is needed for the security check. You can still <a href="https://forms.gle/ZFAa3WXiRgMNXFiN7" class="underline">use the existing signup form</a>.</p></noscript>
+    </form> : <div class="mt-8"><a class="inline-block rounded-full bg-orange-500 px-6 py-3 font-medium focus-visible:outline-orange-400" href="https://forms.gle/ZFAa3WXiRgMNXFiN7">Join the email list</a><p class="mt-4 text-sm text-slate-300">Our signup form is still available while we prepare the new email service. <a href="/privacy/" class="underline">Privacy policy</a></p></div>}
+  </section>
+  {enabled && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+</BaseLayout>
+<script>
+  const form = document.querySelector<HTMLFormElement>('#updates-form');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const input = form.querySelector<HTMLInputElement>('[name=email]')!;
+    const button = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const status = document.querySelector<HTMLElement>('#updates-status')!;
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    if (!data.get('cf-turnstile-response')) {
+      status.textContent = 'Please complete the security check. If it does not load, refresh this page.';
+      status.focus(); return;
+    }
+    button.disabled = true; status.textContent = 'Requesting your confirmation email…'; input.removeAttribute('aria-invalid');
+    const source = new URLSearchParams(location.search).get('source') || 'website';
+    try {
+      const response = await fetch(`${form.dataset.api}/signup`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:data.get('email'),company:data.get('company'),source,turnstile:data.get('cf-turnstile-response')}),signal:AbortSignal.timeout(20000)});
+      const result = await response.json();
+      if (!response.ok) {if(response.status === 400) input.setAttribute('aria-invalid','true');throw new Error(result.error || 'Unable to sign up. Please try again.');}
+      status.textContent = result.message; form.reset();
+    } catch (error) {status.textContent = error instanceof TypeError ? 'Unable to connect. Check your connection and try again.' : error instanceof Error && error.name !== 'TimeoutError' ? error.message : 'Connection timed out. Please try again.';}
+    finally {
+      button.disabled = false; status.focus();
+      (window as Window & {turnstile?: {reset:()=>void}}).turnstile?.reset();
+    }
+  });
+</script>

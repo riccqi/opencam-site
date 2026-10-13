@@ -21,6 +21,11 @@ jobs:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
       - name: Install, build, and upload your site
+        env:
+          PUBLIC_UPDATES_FORM_ENABLED: ${{ vars.PUBLIC_UPDATES_FORM_ENABLED || 'false' }}
+          PUBLIC_UPDATES_ENABLED: ${{ vars.PUBLIC_UPDATES_ENABLED || 'false' }}
+          PUBLIC_UPDATES_API: ${{ vars.PUBLIC_UPDATES_API || 'https://updates-api.opencam.app' }}
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
         uses: withastro/action@v3
         with:
           # path: . # The root location of your Astro project inside the repository. (optional)

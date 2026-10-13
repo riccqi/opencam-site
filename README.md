@@ -58,3 +58,9 @@ text and update its displayed revision date only when the policy itself changes.
 ## License
 
 This repository is licensed under the [GPL-3.0 license](LICENSE).
+
+## Release emails
+
+The isolated Cloudflare Worker, D1 migrations, protected CLI, and tests live in
+`services/updates/`. See [setup and release runbook](docs/updates/README.md).
+The existing Google Form remains the default until the production signup gate passes.

@@ -1,0 +1,25 @@
+name: Check release email system
+on:
+  pull_request:
+    paths: ['services/updates/**', 'src/pages/updates.astro', 'src/components/landing/EmailSignup.astro', '.github/workflows/updates-check.yml']
+  push:
+    paths: ['services/updates/**', 'src/pages/updates.astro', 'src/components/landing/EmailSignup.astro', '.github/workflows/updates-check.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: services/updates/package-lock.json
+      - run: npm ci --prefix services/updates
+      - run: npm --prefix services/updates test
+      - run: npm --prefix services/updates run check
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+      - run: npm ci
+      - run: npm run build
