@@ -67,3 +67,19 @@ send on deploy: only the authenticated, tested, explicitly confirmed start actio
 (or the existing protected CLI launch) can snapshot recipients and begin sending.
 Set it to false to pause all announcements. `SENDING_ENABLED=false` pauses the
 outbox; owner authentication codes are rate-limited and sent separately.
+
+## Everyday use and account protection
+
+Bookmark the studio URL; no local server, terminal or Resend dashboard is needed
+for routine updates. Pick the app before writing. Use a fresh draft for a new
+update, inspect its sender/links/footer and mobile preview, then send a test to
+your own inbox. Wait for the actual test email. Any content/footer changes require
+another test. Review the named app and recipient count, type the subject and start.
+The sending process continues after closing the browser. Check progress here later;
+pause stops remaining sends but cannot recall accepted emails.
+
+Owner codes expire after 10 minutes; the session can remain signed in for seven
+days. Protect opencamapp@gmail.com with two-step verification: access to that inbox
+can grant access to both workspaces. Do not share sign-in codes, and sign out on
+shared devices. The public studio URL itself does not grant access. The setup/test
+drafts are examples, not announcements intended for subscribers.

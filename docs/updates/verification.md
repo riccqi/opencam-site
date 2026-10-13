@@ -126,3 +126,30 @@ A focused scan of the local Git histories (306 OpenCam and 642 TabTab blobs befo
 this revision) found no literal matches for the current stored credentials. This
 is not a comprehensive security audit. Public websites remain on GitHub Pages;
 Workers, D1 data and secret storage remain on Cloudflare.
+
+## Focused security review — 2026-10-13
+
+Reviewed central owner OTP/session handling, CSRF, workspace routing, SQL parameter
+binding, Markdown escaping, iframe isolation, campaign approval, opt-outs, signed
+webhooks and credential placement. All 35 OpenCam and 16 TabTab tests pass.
+
+A regression test reproduced a TabTab concurrent-edit race between approval
+validation and audience creation. The launch transaction now checks the tested
+subject/body/preheader/hash in both audience insertion and state transition;
+concurrent untested edits leave the campaign as a draft with no queued recipients.
+The fix is deployed as TabTab version d8260165-99f7-44e1-9491-030f7dcb6f9f
+(commit 2cb0d47). No real campaign was launched for the review.
+
+Production probes confirmed 401 for anonymous/forged-cookie access to both
+workspace APIs, direct TabTab dashboard access, and both admin APIs. Cross-origin
+POSTs returned 403. The shared dashboard returns no-store, restrictive CSP with
+frame-ancestors none, nosniff, and no-referrer headers.
+
+Exact-value scans found no current stored credentials (including the shared studio
+credential) in 316 OpenCam / 650 TabTab Git-history blobs or either workspace's
+public HTML/JavaScript. This does not prove no historical unknown secret exists.
+`npm audit --omit=dev` reported zero vulnerabilities for both email backends.
+The full TabTab dependency audit reports 11 development/build-tool advisories
+(1 critical, 7 high, 3 moderate), including Astro image processing. These are
+separate from the deployed Worker dependency graph and still need maintenance;
+this review does not certify every website build/development dependency.
