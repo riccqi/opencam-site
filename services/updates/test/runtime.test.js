@@ -56,3 +56,18 @@ test('real workerd + D1 drains 100 recipients through one mocked Resend batch re
 });
 
 async function bundled(contents){const result=await build({stdin:{contents,resolveDir:fileURLToPath(new URL('../src/',import.meta.url)),sourcefile:'test-worker.js'},bundle:true,write:false,format:'esm',platform:'browser',external:['node:*']});return [{type:'ESModule',path:fileURLToPath(new URL('../src/bundled-test.js',import.meta.url)),contents:result.outputFiles[0].text}];}
+
+test('bundled dashboard browser script routes each workspace to its own API',async()=>{
+ const {runInNewContext}=await import('node:vm');
+ const mf=new Miniflare(convertV4MiniflareOptions({modules:await bundled(readFileSync(new URL('../src/index.js',import.meta.url),'utf8')),modulesRoot:fileURLToPath(new URL('../src/',import.meta.url)),compatibilityDate:'2026-10-01',compatibilityFlags:['nodejs_compat']}));
+ try{
+  for(const app of ['opencam','tabtab']){
+   const source=await(await mf.dispatchFetch('https://studio.example/dashboard/app.js?app='+app)).text();
+   const elements=new Map(),requests=[];
+   runInNewContext(source,{document:{getElementById(id){if(!elements.has(id))elements.set(id,{});return elements.get(id);},querySelectorAll(){return [];},visibilityState:'visible'},window:{addEventListener(){}},setInterval(){},AbortSignal,fetch(url,options){requests.push({url,options});return new Promise(()=>{});}});
+   assert.equal(requests.length,1);assert.equal(requests[0].url,app==='tabtab'?'/dashboard/api/tabtab/overview':'/dashboard/api/overview');assert.equal(requests[0].options.headers['X-OpenCam-Dashboard'],'1');
+   elements.get('login-form').onsubmit({preventDefault(){}});
+   assert.equal(requests[1].url,'/dashboard/api/login');
+  }
+ }finally{await mf.dispose();}
+});

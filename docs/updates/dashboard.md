@@ -42,7 +42,7 @@ settings, suppression records and campaign delivery backend. Owner login is shar
 
 ## Shared code
 
-Both deployed Workers use `@riccqi/email-studio` version 1.1.0 from
+Both deployed Workers use `@riccqi/email-studio` version 1.1.1 from
 `packages/email-studio`. OpenCam installs the committed local release tarball;
 TabTab pins that same tarball at an immutable GitHub commit URL in its package lockfile. See the package README for updates.
 The shared code contains no credentials or subscriber data. It provides the
