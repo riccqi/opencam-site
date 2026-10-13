@@ -1,31 +1,12 @@
 ---
-const updatesEnabled = import.meta.env.PUBLIC_UPDATES_ENABLED === "true";
+import UpdatesForm from '../global/UpdatesForm.astro';
+const updatesEnabled = import.meta.env.PUBLIC_UPDATES_ENABLED === 'true';
 ---
-
-<section class="py-16 sm:py-20">
-  <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:max-w-7xl lg:px-8">
-    <div class="flex flex-col items-center gap-8 lg:gap-12">
-      <div class="flex flex-col items-center gap-4 lg:gap-6">
-        <img src="/opencam.png" alt="OpenCam Logo" class="h-16 w-auto mb-2 rounded-2xl" />
-        <h2 class="text-3xl font-medium tracking-tight sm:text-4xl">Stay Updated</h2>
-        <p class="text-primary-950/70 dark:text-primary-200/70 text-lg text-center max-w-lg mb-2">
-          Get OpenCam news, feature announcements, releases, and other updates.
-        </p>
-
-        <div class="flex flex-col items-center">
-          <div class="flex justify-center gap-2">
-            <a
-              class="items-center justify-center font-medium rounded-full focus-visible:outline-orange-600 focus:outline-none inline-flex bg-gradient-to-b from-orange-300 to-orange-500 duration-200 focus-visible:ring-orange-600 hover:brightness-110 hover:shadow-lg px-4 sm:px-8 py-2.5 text-center text-white w-auto"
-              href={updatesEnabled ? "/updates/" : "https://forms.gle/ZFAa3WXiRgMNXFiN7"}
-              target={updatesEnabled ? undefined : "_blank"}
-              rel="noopener noreferrer"
-            >
-              Join Email List
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
+<section id="updates" aria-labelledby="updates-heading" class="py-16 sm:py-20">
+  <div class="mx-auto max-w-xl px-6">
+    <img src="/opencam.png" alt="" width="64" height="64" class="rounded-2xl mb-8" />
+    <h2 id="updates-heading" class="text-3xl font-medium tracking-tight sm:text-4xl">Get OpenCam updates</h2>
+    <p class="mt-5 text-lg text-slate-300">News, features, announcements, and releases from OpenCam. Unsubscribe anytime.</p>
+    <UpdatesForm enabled={updatesEnabled} />
   </div>
-</section> 
+</section>

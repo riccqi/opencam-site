@@ -1,9 +1,9 @@
 name: Check release email system
 on:
   pull_request:
-    paths: ['services/updates/**', 'src/pages/updates.astro', 'src/components/landing/EmailSignup.astro', '.github/workflows/updates-check.yml']
+    paths: ['services/updates/**', 'src/pages/updates.astro', 'src/components/global/UpdatesForm.astro', 'src/components/landing/EmailSignup.astro', '.github/workflows/updates-check.yml']
   push:
-    paths: ['services/updates/**', 'src/pages/updates.astro', 'src/components/landing/EmailSignup.astro', '.github/workflows/updates-check.yml']
+    paths: ['services/updates/**', 'src/pages/updates.astro', 'src/components/global/UpdatesForm.astro', 'src/components/landing/EmailSignup.astro', '.github/workflows/updates-check.yml']
 permissions:
   contents: read
 jobs:
