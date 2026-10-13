@@ -29,17 +29,15 @@ export async function drain(env, deps = {}) {
     if (!s || s.status !== 'subscribed') return skip('not_subscribed');
     const c = await first(env,'SELECT * FROM campaigns WHERE id=? AND launched_at IS NOT NULL',d.campaign_id);
     if (!c) return skip('not_launched');
-    const reviewedLegacy=s.consent_version==='legacy-form-updates-owner-reviewed-2026-10-13' && !!s.consent_evidence;
-    if(!s.confirmed_at && !reviewedLegacy)return skip('consent_missing');
-    if(c.campaign_type==='update' && s.consent_version!=='opencam-updates-2026-10-13-v2' && !reviewedLegacy)return skip('consent_scope');
+    const explicitOptIn=['legacy-form-updates-owner-reviewed-2026-10-13','opencam-updates-single-opt-in-v3'].includes(s.consent_version) && !!s.consent_evidence;
+    if(!s.confirmed_at && !explicitOptIn)return skip('consent_missing');
+    if(c.campaign_type==='update' && s.consent_version!=='opencam-updates-2026-10-13-v2' && !explicitOptIn)return skip('consent_scope');
     recipient=s.email; message=announcement(c,`${env.API_ORIGIN}/unsubscribe?token=${unsubscribeToken(env,s.id)}`,env.POSTAL_ADDRESS);
   } else {
     const payload=decrypt(env,d.payload);
     recipient=payload.recipient; message=payload.message;
-    if (d.kind === 'confirmation') {
-      const s = await first(env,'SELECT * FROM subscribers WHERE id=?',d.subscriber_id);
-      if (!s || s.status === 'suppressed' || s.status === 'subscribed' || s.confirm_hash !== payload.confirmHash || s.confirm_expires <= t) return skip('confirmation_obsolete');
-    }
+    if (d.kind === 'confirmation') return skip('confirmation_disabled');
+
   }
   // Last DB read before provider invocation; a provider handoff already in progress cannot be recalled.
   const current=await first(env,'SELECT status FROM subscribers WHERE email=?',recipient);

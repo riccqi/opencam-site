@@ -1,7 +1,7 @@
 # OpenCam update emails
 
 The site stays on GitHub Pages. A separate Cloudflare Worker at
-`https://updates-api.opencam.app` owns signup, double opt-in, unsubscribe,
+`https://updates-api.opencam.app` owns signup, single opt-in, unsubscribe,
 administration, D1 storage, and an outbox drained by a cron trigger. Resend sends mail through the same account as TabTab. Google is only a legacy migration source, not a
 runtime dependency. TestFlight contacts are excluded.
 
@@ -39,15 +39,14 @@ PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA npm run dev
 
 For local Worker HTTP testing, override SITE_ORIGIN, API_ORIGIN and
 TURNSTILE_HOSTNAME to the exact local values. Never deploy the test Turnstile
-secret/sitekey. Production signup/confirmation sending are enabled after verification; live announcements remain disabled.
+secret/sitekey. Production signups are enabled; no confirmation email is sent; live announcements remain disabled.
 
 ## Data and behavior
 
 - Email normalization trims and lowercases; it does not strip plus tags or dots.
-- Subscriber states: pending, subscribed, unsubscribed, suppressed. Subscribing
-  an unsubscribed address leaves it unsubscribed until a fresh confirmation.
+- Subscriber states: pending, subscribed, unsubscribed, suppressed. An explicit form submission immediately subscribes or resubscribes an address.
   Suppression is never cleared by signup or confirmation.
-- Confirmation tokens: 256 random bits, SHA-256 at rest, expire after 24 hours,
+- Legacy confirmation tokens (no new ones are issued): 256 random bits, SHA-256 at rest, expire after 24 hours,
   atomically consumed once. Duplicate requests return the same generic message.
 - Unsubscribe tokens: keyed 256-bit HMAC per random subscriber ID, with only
   SHA-256 stored in the subscriber table. Long-lived so older emails still work.
@@ -55,20 +54,19 @@ secret/sitekey. Production signup/confirmation sending are enabled after verific
 - Confirmation outbox payloads are AES-256-GCM encrypted with DATA_KEY. Terminal
   sends clear the ciphertext; ciphertext for queued retries is retained. Pending
   signups expire after 30 days. Preserve DATA_KEY until its queue has drained.
-- Current consent version `opencam-updates-2026-10-13-v2` covers OpenCam news,
+- Current consent version `opencam-updates-single-opt-in-v3` covers OpenCam news,
   features, announcements and releases. Earlier `release-updates-2026-10-13`
   consent stays limited to releases and is excluded from general-update sends.
-  Existing consent records are not rewritten. The form also explains confirmation
+  Existing consent records are not rewritten. The form records explicit single-opt-in consent
   and links the privacy policy. signup_at/source record the latest explicit
   signup attempt; confirmed_at records actual successful confirmation only.
 - Public GET requests never change subscription state. Confirmation requires a
   button POST. Unsubscribe supports both a button POST and RFC 8058 one-click POST.
 - Origin checks, bounded bodies, Turnstile hostname/action verification, a
-  honeypot, hashed IP limits (10/hour), and address limits (3/day; at least five
-  minutes between queued confirmations) protect signup. Counters use D1 atomic
+  honeypot, hashed IP limits (10/hour), and address limits (3/day) protect signup. Counters use D1 atomic
   updates. Only the Cloudflare-supplied client IP is used. Add edge WAF limits if
   real traffic demonstrates need; do not log raw request bodies or token URLs.
-- D1 batches atomically commit subscriber changes/outbox insertion and campaign
+- Signup changes are atomic and create no outbox entry. D1 batches atomically commit campaign
   launch/snapshot insertion. Unique version and campaign-recipient constraints
   prevent duplicate launches and queue entries.
 - Protected CLI uses an environment-held bearer token of at least 32 characters;
@@ -81,12 +79,12 @@ secret/sitekey. Production signup/confirmation sending are enabled after verific
 ## Delivery semantics
 
 The durable outbox sends **at most one message per minute globally**, including
-confirmations/tests, with a configurable rolling 24-hour attempt budget (1,000 in production). Failed/skipped reservations are counted conservatively. Set the budget
+test announcements, with a configurable rolling 24-hour attempt budget (1,000 in production). Failed/skipped reservations are counted conservatively. Set the budget
 below the shared Resend account quota, reserving capacity for TabTab. This limit
 is local to OpenCam, not an account-wide quota coordinator.
 The one-per-minute rate is intentionally conservative: 1,725 messages take at
 least 28.75 hours after quota approval, and longer under a daily cap. It is not a
-bulk-marketing throughput service. Confirmations take priority.
+bulk-marketing throughput service. Old queued confirmations are skipped without sending.
 
 An atomic `queued/retry -> sending` claim prevents simultaneous workers sending
 the same entry. `sent` means Resend accepted the message, not that it reached the
@@ -131,6 +129,6 @@ campaigns keep the public-version gate. See the runbook for both formats.
 
 The owner-authorized form import contains 1,725 subscribed records with explicit
 legacy-form consent evidence and NULL mailbox-confirmation timestamps. These are
-eligible for general and release campaigns; new online signups still require
-confirmation. Existing opt-outs and suppressions are never overwritten. See
+eligible for general and release campaigns, as are new explicit single-opt-in
+signups. No mailbox confirmation is required. Existing opt-outs and suppressions are never overwritten. See
 [migration report](migration-report.md) for the audit and recovery artifacts.

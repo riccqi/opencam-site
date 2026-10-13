@@ -34,7 +34,7 @@ uploads never send email.
    explicitly add that approved address to TEST_RECIPIENTS first; simulator-only
    is the default. Test mode never subscribes a recipient. The preview-only
    unsubscribe link in a test message intentionally changes no subscriber record;
-   separately test real unsubscribe using an approved double-opt-in address.
+   separately test real unsubscribe using an approved subscribed test address.
 
 4. Review preview and received test, count eligible subscribers, confirm daily
    quota and remaining shared Resend account capacity, and review suppression and Resend webhook failures.

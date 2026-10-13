@@ -4,8 +4,7 @@ Updated 2026-10-13. Resend replaces the original SES plan; no AWS setup is requi
 
 ## Automated checks
 
-23 JavaScript tests plus the Python import test pass, including real workerd/D1 integration. GitHub CI run 38467948467
-passed, as did the Astro build and Worker bundle. Tests cover double opt-in,
+24 JavaScript tests plus the Python import test pass, including real workerd/D1 integration. Local checks passed, as did the Astro build and Worker bundle. Tests cover immediate single opt-in without outbound email, legacy confirmation
 expiry/reuse/forgery, scanner-safe GET, RFC 8058 POST, resubscribe, Turnstile and
 rate limits, admin authentication, public App Store version gating, immutable
 campaigns, duplicate launches, queued unsubscribe, postal-address gating,
@@ -15,18 +14,18 @@ callbacks, cross-app isolation and idempotent sending.
 ## Production infrastructure and tests
 
 - Worker `opencam-updates`: https://updates-api.opencam.app. Version
-  `6f01f8a9-5775-4b8b-bff0-29e41d933e01`; D1 migrations 0001 and 0002 applied.
+  `50b66c02-716c-49ec-b8f6-9cd65245f2db`; D1 migrations 0001 and 0002 applied.
 - Resend team `xiaochean`: owner upgraded Transactional to Pro, $20/month,
   50,000 shared emails. OpenCam has a separate domain-restricted sending key and
   webhook `bdb1d6a3-8c03-4f6b-8d3a-892104798a1d`. TabTab was not changed.
 - OpenCam domain verified. Sending DKIM/CNAMEs and monitoring DMARC published;
   existing website and incoming-mail DNS preserved. All seven secrets are in
   Worker secret storage; private local recovery file is gitignored, mode 0600.
-- Real Turnstile signup at https://opencam.app/updates/?source=app returned generic
+- Historical double-opt-in setup test (superseded below): real Turnstile signup at https://opencam.app/updates/?source=app returned generic
   success, stored source=app, and queued an encrypted confirmation. Gmail received
   the confirmation. GET left the subscriber pending; POST confirmed it. Reusing
   the token did not reconfirm. Unsubscribe GET left it subscribed; POST unsubscribed.
-- Resubscribe returned generic success and remained unsubscribed pending fresh
+- Historical resubscribe test: resubscribe returned generic success and remained unsubscribed pending fresh
   confirmation. The fresh emailed token successfully resubscribed the address.
   RFC 8058 one-click POST then unsubscribed it; repeating POST was safe. The owner
   test record is left unsubscribed.
@@ -47,12 +46,11 @@ callbacks, cross-app isolation and idempotent sending.
 
 ## Operating limits and remaining owner actions
 
-- Homepage and /updates use the verified new signup form. Signups and confirmation
-  sending are enabled. LIVE_SEND_ENABLED remains false.
+- Homepage and /updates use the verified new signup form. Signups activate immediately without confirmation email. LIVE_SEND_ENABLED remains false.
   POSTAL_ADDRESS is intentionally blank for setup and must be supplied before
   release campaigns. Each campaign also requires explicit owner authorization.
 - Queue sends at most once per minute (cron scheduling can add delay), with a
-  1,000-attempt rolling daily ceiling. This includes confirmations and tests.
+  1,000-attempt rolling daily ceiling. This includes test announcements.
   Quota is local; check TabTab and shared Resend usage before a campaign.
 - Owner reviewed original form consent and reported no known opt-outs. All 1,725
   valid unique addresses were imported with legacy-consent evidence and NULL
@@ -69,3 +67,12 @@ type while preserving all existing release campaigns. General updates use an
 explicit key and do not require an App Store version; release campaigns retain
 that gate. Tests verify narrow-consent exclusion, send-time recheck, immutable
 keys and duplicate launch protection. Postal-address and live-send gates remain.
+
+## Single-opt-in revision
+
+OpenCam now matches TabTab: submitting Subscribe activates the subscription immediately.
+No confirmation email or token is created. Explicit resubscribe works the same way;
+suppression remains permanent. Consent evidence records website single opt-in without
+inventing a mailbox-confirmation timestamp. Old queued confirmations are skipped,
+and previously issued links remain valid until their original expiry. No pending
+contacts are bulk-activated. Imported contacts and campaign gates are unchanged.

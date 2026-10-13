@@ -35,7 +35,7 @@ cannot queue email. No TestFlight records were accessed or imported.
 
 The list resides in OpenCam's private Cloudflare D1 database. Approved campaigns
 are sent via the domain-restricted Resend API; no Resend Marketing audience was
-created. New website signups still require double opt-in. The explicit, reviewed
+created. New website signups now use explicit single opt-in with no confirmation email. The explicit, reviewed
 legacy-consent exception supports both general updates and release campaigns without
 inventing confirmation timestamps. Release campaigns retain the App Store gate.
 

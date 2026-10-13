@@ -1,10 +1,10 @@
 import { Buffer } from 'node:buffer';
 import { token, hash, hmac, key, email, now, equal, encrypt, escape, unsubscribeToken, verifyResend } from './security.js';
 import { stmt, run, first, all } from './db.js';
-import { confirmation, announcement } from './mail.js';
+import { announcement } from './mail.js';
 import { drain } from './queue.js';
-const CONSENT='opencam-updates-2026-10-13-v2';
-const generic={message:'If this address is eligible, a confirmation email will arrive shortly. Check your inbox and spam folder.'};
+const CONSENT='opencam-updates-single-opt-in-v3';
+const generic={message:'Thanks for subscribing to OpenCam updates. You can unsubscribe anytime.'};
 class HttpError extends Error { constructor(status,message) { super(message);this.status=status; } }
 const fail=(status,message)=>{throw new HttpError(status,message);};
 const json=(data,status=200)=>Response.json(data,{status});
@@ -40,18 +40,17 @@ async function signup(req,env,deps) {
   const result=await verify.json();
   if(!result.success||result.hostname!==env.TURNSTILE_HOSTNAME||result.action!=='signup')fail(400,'Security check failed. Please try again.');
   if(!await rate(env,`email:${address}`,3,86400))return json(generic,202);
-  const id=token(),t=now(),ct=token(),ctHash=hash(ct);
+  const id=token(),t=now();
   const source=['website','app','testflight'].includes(b.source)?b.source:'website';
-  const payload=encrypt(env,{recipient:address,message:confirmation(env,ct),confirmHash:ctHash});
-  // Atomic state/token + outbox insert. Unsubscribed remains unsubscribed until POST confirmation.
-  await env.DB.batch([
-    stmt(env,`INSERT INTO subscribers(id,email,status,source,signup_at,consent_version,confirm_hash,confirm_expires,unsubscribe_hash,last_confirmation_at)
-      VALUES(?,?,'pending',?,?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET source=excluded.source,signup_at=excluded.signup_at,
-      consent_version=excluded.consent_version,confirm_hash=excluded.confirm_hash,confirm_expires=excluded.confirm_expires,last_confirmation_at=excluded.last_confirmation_at
-      WHERE subscribers.status IN ('pending','unsubscribed') AND subscribers.last_confirmation_at<=?`,id,address,source,t,CONSENT,ctHash,t+86400,hash(unsubscribeToken(env,id)),t,t-300),
-    stmt(env,`INSERT INTO deliveries(id,subscriber_id,kind,payload,available_at)
-      SELECT ?,id,'confirmation',?,? FROM subscribers WHERE email=? AND confirm_hash=?`,token(),payload,t,address,ctHash)
-  ]);
+  const evidence=JSON.stringify({method:'website_single_opt_in',consent_at:t,consent_version:CONSENT,mailbox_confirmed:false});
+  // A deliberate signup activates immediately. Suppression and existing consent win.
+  // No confirmation token or outbound message is created.
+  await run(env,`INSERT INTO subscribers(id,email,status,source,signup_at,consent_version,unsubscribe_hash,last_confirmation_at,consent_evidence)
+    VALUES(?,?,'subscribed',?,?,?,?,0,?) ON CONFLICT(email) DO UPDATE SET
+    status='subscribed',source=excluded.source,signup_at=excluded.signup_at,
+    consent_version=excluded.consent_version,consent_evidence=excluded.consent_evidence,
+    unsubscribed_at=NULL,confirm_hash=NULL,confirm_expires=NULL
+    WHERE subscribers.status IN ('pending','unsubscribed')`,id,address,source,t,CONSENT,hash(unsubscribeToken(env,id)),evidence);
   return json(generic,202);
 }
 async function tokenAction(req,env,action) {
@@ -167,7 +166,7 @@ async function admin(req,env,path,deps) {
       await env.DB.batch([
         stmt(env,`INSERT OR IGNORE INTO deliveries(id,campaign_id,subscriber_id,kind,available_at)
           SELECT lower(hex(randomblob(32))),?,id,'announcement',? FROM subscribers
-          WHERE status='subscribed' AND (confirmed_at IS NOT NULL OR (consent_version='legacy-form-updates-owner-reviewed-2026-10-13' AND consent_evidence IS NOT NULL)) AND (?='release' OR consent_version IN (?,'legacy-form-updates-owner-reviewed-2026-10-13')) AND (SELECT launched_at FROM campaigns WHERE id=?) IS NULL`,c.id,now(),c.campaign_type,CONSENT,c.id),
+          WHERE status='subscribed' AND (confirmed_at IS NOT NULL OR (consent_version IN ('legacy-form-updates-owner-reviewed-2026-10-13','opencam-updates-single-opt-in-v3') AND consent_evidence IS NOT NULL)) AND (?='release' OR consent_version IN (?,'opencam-updates-2026-10-13-v2','legacy-form-updates-owner-reviewed-2026-10-13')) AND (SELECT launched_at FROM campaigns WHERE id=?) IS NULL`,c.id,now(),c.campaign_type,CONSENT,c.id),
         stmt(env,'UPDATE campaigns SET launched_at=?,public_verified_at=? WHERE id=? AND launched_at IS NULL',now(),c.campaign_type==='release'?now():null,c.id),
         stmt(env,'INSERT INTO admin_audit VALUES(?,?,?,?)',token(),'launch',c.id,now())
       ]);

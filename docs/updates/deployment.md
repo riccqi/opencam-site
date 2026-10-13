@@ -65,7 +65,7 @@ Do not email that list during setup or reimport without reviewing later opt-outs
 3. Set GitHub PUBLIC_UPDATES_FORM_ENABLED=true, with existing real sitekey/API,
    while PUBLIC_UPDATES_ENABLED=false. Publish via existing Pages workflow:
    /updates uses the new form, homepage continues the existing Google Form.
-4. Test production signup, inbox confirmation, scanner-safe GET, POST confirmation,
+4. Test production signup activates immediately without queueing email, scanner-safe GET,
    repeat token, unsubscribe POST, and a fresh resubscription. Verify simulated
    delivery events and suppression. Inspect MIME for aligned SPF/DKIM/DMARC,
    unsubscribe headers and DKIM coverage of those headers (RFC 8058).
