@@ -40,7 +40,8 @@ uploads never send email.
    quota and remaining shared Resend account capacity, and review suppression and Resend webhook failures.
    Campaign content is immutable; a conflicting version is rejected, not overwritten.
    Correct a draft only using a reviewed database migration before any launch.
-5. After explicit live-send approval, enable LIVE_SEND_ENABLED and run:
+5. Set POSTAL_ADDRESS to the owner-provided business address (currently blank).
+   After explicit live-send approval, enable LIVE_SEND_ENABLED and run:
 
    ```sh
    npm run admin -- launch CAMPAIGN_ID --public-version 2.1.0

@@ -18,7 +18,7 @@
     "SIGNUPS_ENABLED": "true",
     "SENDING_ENABLED": "true",
     "LIVE_SEND_ENABLED": "false",
-    "DAILY_SEND_LIMIT": "20",
+    "DAILY_SEND_LIMIT": "1000",
     "TEST_RECIPIENTS": "xiaochean@gmail.com,opencamapp@gmail.com,delivered@resend.dev,bounced@resend.dev,complained@resend.dev,suppressed@resend.dev"
   }
 }

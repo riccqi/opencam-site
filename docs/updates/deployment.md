@@ -1,6 +1,7 @@
 # Deployment and account setup
 
-The owner selected Resend on 2026-10-13 to share the existing TabTab account.
+The owner selected Resend on 2026-10-13 to share the existing TabTab account,
+then upgraded the Transactional plan to Pro ($20/month, 50,000 emails).
 SES/SNS/IAM setup is superseded; no AWS account is required for this system.
 
 ## Existing infrastructure
@@ -38,14 +39,14 @@ SES/SNS/IAM setup is superseded; no AWS account is required for this system.
 6. Register `https://updates-api.opencam.app/events/resend` with events
    email.sent, email.delivered, email.bounced, email.complained, email.suppressed,
    and email.failed. Install its unique RESEND_WEBHOOK_SECRET. Preserve TabTab's
-   existing webhook. The owner chose **Keep Free** and **Keep separate; wait for
-   Pro**. Do not route TabTab events through OpenCam or change TabTab's endpoint.
-   Keep production signup paused until a separate OpenCam endpoint is available.
+   existing webhook. OpenCam now has its own enabled endpoint:
+   `bdb1d6a3-8c03-4f6b-8d3a-892104798a1d`. Its signing secret is installed.
+   Do not route TabTab events through OpenCam or change TabTab's endpoint.
 7. Verify signed callbacks using delivered@resend.dev, bounced@resend.dev,
    complained@resend.dev and suppressed@resend.dev. Test mail counts toward quota.
    Webhook logs must show 2xx; bounce/complaint/suppression must update D1.
 8. Check shared account usage before raising DAILY_SEND_LIMIT. OpenCam starts at
-   20 attempts/day, one per minute, while all sends remain gated off. The limit is
+   1,000 attempts/day, at most one per minute; announcements remain gated off. The limit is
    local to OpenCam; TabTab usage also consumes Resend's account quota. Pro permits
    50,000 emails/month and 10 domains for $20/month at the checked pricing; no paid
    upgrade or add-on is automatic. Keep overage billing off unless authorized.

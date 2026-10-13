@@ -39,7 +39,7 @@ PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA npm run dev
 
 For local Worker HTTP testing, override SITE_ORIGIN, API_ORIGIN and
 TURNSTILE_HOSTNAME to the exact local values. Never deploy the test Turnstile
-secret/sitekey. Every production switch defaults to false.
+secret/sitekey. Production signup/confirmation sending are enabled after verification; live announcements remain disabled.
 
 ## Data and behavior
 
@@ -79,8 +79,7 @@ secret/sitekey. Every production switch defaults to false.
 ## Delivery semantics
 
 The durable outbox sends **at most one message per minute globally**, including
-confirmations/tests, with a configurable rolling 24-hour attempt budget (20 by
-default). Failed/skipped reservations are counted conservatively. Set the budget
+confirmations/tests, with a configurable rolling 24-hour attempt budget (1,000 in production). Failed/skipped reservations are counted conservatively. Set the budget
 below the shared Resend account quota, reserving capacity for TabTab. This limit
 is local to OpenCam, not an account-wide quota coordinator.
 The one-per-minute rate is intentionally conservative: 1,725 messages take at

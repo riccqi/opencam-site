@@ -1,55 +1,60 @@
-# Verification and remaining blockers
+# Verification and launch status
 
-Updated 2026-10-13 after the owner selected shared Resend delivery instead of SES.
+Updated 2026-10-13. Resend replaces the original SES plan; no AWS setup is required.
 
-## Verified
+## Automated checks
 
-- 21 tests pass, including an actual workerd/D1 integration test. All external
-  calls are intercepted in tests; they do not send email.
-- Double opt-in, duplicate/expired/reused/forged tokens, scanner-safe GET, POST
-  confirmation/unsubscribe, explicit resubscribe, rate limits and Turnstile checks.
-- Resend HMAC webhook authentication against raw request bytes, timestamp bounds,
-  replay deduplication, bounce/complaint/suppression and cross-app sender isolation.
-- Protected admin, public App Store version gating, immutable/duplicate campaigns,
-  queued unsubscribe, sender postal-address gate, attempt quota, retry/ambiguity,
-  delivery-tag reconciliation, encrypted payloads and CSV escaping.
-- Resend request headers, stable idempotency keys, message formatting and errors.
-- Astro production build and Wrangler dry-run pass; GitHub Pages hosting retained.
-- Earlier browser checks at 780px and 480px CSS widths found no horizontal overflow.
-  Native validation, focused aria-live status, network-error and success UI checked.
-  Success used a temporary localhost stub, now stopped; not proof of live delivery.
-- D1 `opencam-updates` created with migration 0001. Worker deployed at
-  https://updates-api.opencam.app; latest paused Resend version:
-  `7c4ff48e-baf0-4b8b-8239-547e694fa7ab`.
-- Production health 200, unauthenticated admin 401, authenticated empty counts 200,
-  disabled signup 503. No legacy subscribers imported.
-- Managed Turnstile for opencam.app created. Secret installed; public sitekey and
-  API configured in GitHub repository variables. Both frontend switches remain off.
-- Four generated admin/encryption/rate secrets installed in Worker. Private 0600
-  recovery file is gitignored. No production secret in frontend or tracked files.
-- Both incoming aliases (richard, updates) actively forward to the owner-verified
-  opencamapp@gmail.com inbox through Cloudflare. Reply to richard was received in the destination Gmail inbox on 2026-10-13.
+21 tests pass, including real workerd/D1 integration. GitHub CI run 38467948467
+passed, as did the Astro build and Worker bundle. Tests cover double opt-in,
+expiry/reuse/forgery, scanner-safe GET, RFC 8058 POST, resubscribe, Turnstile and
+rate limits, admin authentication, public App Store version gating, immutable
+campaigns, duplicate launches, queued unsubscribe, postal-address gating,
+quota/retry/ambiguous recovery, encrypted payloads, CSV escaping, signed Resend
+callbacks, cross-app isolation and idempotent sending.
 
-## Pending live activation
+## Production infrastructure and tests
 
-1. OpenCam domain is verified in Resend; DKIM and two sending CNAME records are
-   published. Existing website and incoming-email records are preserved.
-2. Owner selected **Keep Free**. No upgrade was purchased. The existing TabTab
-   webhook occupies the one available endpoint. Owner chose **Keep separate; wait
-   for Pro**. No shared router is retained or deployed; TabTab is unchanged.
-3. Sending-only opencam.app-restricted RESEND_API_KEY is installed. Webhook signing
-   secret and live webhook verification remain pending a separate endpoint after Pro.
-4. Approved setup-only email reached xiaochean@gmail.com inbox on 2026-10-13.
-   Gmail reports SPF, aligned opencam.app DKIM and DMARC pass; Reply-To is correct.
-   Resend message ID: 01a1370e-a8e0-75ee-b87e-84a7256dde08. This direct provider
-   diagnostic does not prove the Worker signup flow. Confirmation, unsubscribe,
-   resubscribe, announcement unsubscribe headers and signed event tests remain.
-5. Production website staging/cutover after all gates pass. Existing Google Form
-   remains the live homepage signup. LIVE_SEND_ENABLED remains false.
-6. POSTAL_ADDRESS is deliberately blank during setup; required before any release announcement, plus explicit
-   approval of each campaign. No announcement or mass reconfirmation has been sent.
-7. Historical consent/opt-out review for 1,725 quarantined unique valid addresses.
-   No TestFlight contacts are included. Confirmations have not been fabricated.
-8. Owner password-manager backup of secrets and a private backup-retention policy.
+- Worker `opencam-updates`: https://updates-api.opencam.app. Version
+  `962b26ff-bd6e-417c-a9ed-9b453a703a96`; D1 migration 0001 applied.
+- Resend team `xiaochean`: owner upgraded Transactional to Pro, $20/month,
+  50,000 shared emails. OpenCam has a separate domain-restricted sending key and
+  webhook `bdb1d6a3-8c03-4f6b-8d3a-892104798a1d`. TabTab was not changed.
+- OpenCam domain verified. Sending DKIM/CNAMEs and monitoring DMARC published;
+  existing website and incoming-mail DNS preserved. All seven secrets are in
+  Worker secret storage; private local recovery file is gitignored, mode 0600.
+- Real Turnstile signup at https://opencam.app/updates/?source=app returned generic
+  success, stored source=app, and queued an encrypted confirmation. Gmail received
+  the confirmation. GET left the subscriber pending; POST confirmed it. Reusing
+  the token did not reconfirm. Unsubscribe GET left it subscribed; POST unsubscribed.
+- Resubscribe returned generic success and remained unsubscribed pending fresh
+  confirmation. The fresh emailed token successfully resubscribed the address.
+  RFC 8058 one-click POST then unsubscribed it; repeating POST was safe. The owner
+  test record is left unsubscribed.
+- Resend simulator delivered/bounced/complained/suppressed tests ran through the
+  real cron queue. Signed callbacks created all three suppression reasons in D1.
+  Unauthenticated webhook requests return 403; unauthenticated admin returns 401;
+  forged Turnstile returns 400. A forged confirmation did not mutate state.
+- Owner inbox received a Worker-generated test announcement. Gmail reports aligned
+  DKIM, SPF and DMARC pass. List-Unsubscribe and List-Unsubscribe-Post are present
+  and covered by the opencam.app DKIM signature. Test-mode unsubscribe is intentionally
+  PREVIEW_ONLY; actual unsubscribe is tested separately on the owner test record.
+- Both richard@opencam.app and updates@opencam.app forwarded test mail to
+  opencamapp@gmail.com. Reply-To is richard@opencam.app.
+- Repeated setup test request returns the same delivery ID. No live announcement
+  launched; the launch endpoint returns 403 while LIVE_SEND_ENABLED=false.
+- Earlier responsive browser checks at 780px and 480px found no horizontal overflow;
+  native validation, focused live status, network errors and success were checked.
 
-SES setup is superseded; there is no AWS credential or production-access blocker.
+## Operating limits and remaining owner actions
+
+- Homepage and /updates use the verified new signup form. Signups and confirmation
+  sending are enabled. LIVE_SEND_ENABLED remains false.
+  POSTAL_ADDRESS is intentionally blank for setup and must be supplied before
+  release campaigns. Each campaign also requires explicit owner authorization.
+- Queue sends at most once per minute (cron scheduling can add delay), with a
+  1,000-attempt rolling daily ceiling. This includes confirmations and tests.
+  Quota is local; check TabTab and shared Resend usage before a campaign.
+- All 1,725 unique valid legacy addresses remain quarantined for historical
+  consent/opt-out review. No legacy import, mass reconfirmation or TestFlight import.
+- Move secret recovery values to the owner's password manager; choose a private
+  backup-retention policy. No secret or subscriber export is committed to Git.
