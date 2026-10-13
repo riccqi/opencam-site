@@ -11,7 +11,7 @@ const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
         <p id="email-help" class="mt-2 text-sm text-slate-300">Subscribe for occasional OpenCam emails. Unsubscribe anytime.</p>
       </div>
       <div class="hidden" aria-hidden="true"><label>Company<input name="company" tabindex="-1" autocomplete="off" /></label></div>
-      <div class="cf-turnstile" data-sitekey={sitekey} data-action="signup" data-theme="dark" data-size="flexible"></div>
+      <div class="cf-turnstile" data-sitekey={sitekey} data-action="signup"></div>
       <p class="text-sm text-slate-300">By subscribing, you agree to receive OpenCam updates. Read our <a href="/privacy/" class="underline focus-visible:outline-orange-400">privacy policy</a>.</p>
       <button type="submit" class="rounded-full bg-orange-500 hover:bg-orange-400 disabled:opacity-50 px-6 py-3 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400">Subscribe</button>
       <p id="updates-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" class="text-slate-200"></p>
@@ -28,7 +28,7 @@ const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
     if (!form.reportValidity()) return;
     const data = new FormData(form);
     if (!data.get('cf-turnstile-response')) {
-      status.textContent = 'Please complete the security check. If it does not load, refresh this page.';
+      status.textContent = 'The automatic security check is still loading. Please try again in a moment, or refresh this page.';
       status.focus(); return;
     }
     button.disabled = true; status.textContent = 'Subscribing…'; input.removeAttribute('aria-invalid');
