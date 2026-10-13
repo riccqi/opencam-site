@@ -3,7 +3,10 @@ import {renderEmail} from '@riccqi/email-studio/template';
 import {token,hash,hmac,equal,now,email} from './security.js';
 import {run,first,all,stmt} from './db.js';
 import {sendResend,announcement} from './mail.js';
-export const studio=createDashboard({name:'OpenCam',domain:'opencam.app',initial:'O',color:'#d45a0b',sources:'OpenCam website signups and your reviewed starting list.',uncapped:true});
+const workspaceLinks=[{name:'OpenCam',url:'/dashboard?app=opencam'},{name:'TabTab',url:'/dashboard?app=tabtab'}];
+const shared={workspaceLinks,authBase:'/dashboard/api',authHeader:'X-OpenCam-Dashboard',signInEmail:'opencamapp@gmail.com'};
+export const studio=createDashboard({...shared,name:'OpenCam',domain:'opencam.app',initial:'O',color:'#d45a0b',sources:'OpenCam website signups and your reviewed starting list.',uncapped:true,assetQuery:'?app=opencam'});
+export const tabtabStudio=createDashboard({...shared,apiBase:'/dashboard/api/tabtab',assetQuery:'?app=tabtab'});
 const json=x=>Response.json(x);
 const bad=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const cookie=v=>`__Host-opencam_session=${v}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${v?604800:0}`;
@@ -21,7 +24,7 @@ export async function dashboardAPI(req,env,{body,rate,admin,deps}){
   await run(env,'DELETE FROM dashboard_codes WHERE expires_at<?',now());await run(env,'DELETE FROM dashboard_sessions WHERE expires_at<?',now());
   const id=token(),a=new Uint32Array(1);crypto.getRandomValues(a);const code=String(a[0]%100000000).padStart(8,'0');
   await run(env,'INSERT INTO dashboard_codes(id,digest,expires_at,created_at) VALUES(?,?,?,?)',id,hmac(env.TOKEN_KEY,`${id}/${code}`),now()+600,now());
-  const result=await (deps.sendLogin||sendResend)(env,env.DASHBOARD_EMAIL,{subject:'Your OpenCam dashboard sign-in code',text:`Your sign-in code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`,html:`<p>Your OpenCam sign-in code is <strong>${code}</strong>. It expires in 10 minutes.</p>`},'login-'+id);
+  const result=await (deps.sendLogin||sendResend)(env,env.DASHBOARD_EMAIL,{subject:'Your Email Studio sign-in code',text:`Your sign-in code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`,html:`<p>Your Email Studio sign-in code is <strong>${code}</strong>. It expires in 10 minutes.</p>`},'login-'+id);
   if(result.status!=='sent')bad('Unable to send a sign-in code. Please try again later.',503);
   return json({id,message:'A sign-in code was sent to opencamapp@gmail.com.'});
  }
@@ -34,6 +37,16 @@ export async function dashboardAPI(req,env,{body,rate,admin,deps}){
   const v=token();await run(env,'INSERT INTO dashboard_sessions VALUES(?,?)',hash(v),now()+604800);return new Response('{"ok":true}',{headers:{'content-type':'application/json','set-cookie':cookie(v)}});
  }
  const who=await identity(req,env);if(!who)bad('Sign in to your OpenCam dashboard.',401);
+ if(path.startsWith('/tabtab/')){
+  const target=path.slice('/tabtab'.length);
+  const allowed=req.method==='GET'?['/overview','/contacts'].includes(target):req.method==='POST'&&(['/unsubscribe','/settings','/preview','/campaign'].includes(target)||/^\/campaign\/[\w-]+\/(test|start|pause|resume)$/.test(target));
+  if(!allowed)bad('Not found.',404);
+  if(!env.TABTAB_STUDIO||!env.SHARED_STUDIO_TOKEN)bad('TabTab workspace is unavailable.',503);
+  const headers={'content-type':'application/json',origin:'https://updates.tabtabapp.net','x-tabtab-dashboard':'1',authorization:'Bearer '+env.SHARED_STUDIO_TOKEN};
+  const response=await env.TABTAB_STUDIO.fetch(new Request('https://updates.tabtabapp.net/dashboard/api'+target+u.search,{method:req.method,headers,...(req.method==='GET'?{}:{body:JSON.stringify(await body(req,40000))})}));
+  if(target==='/overview'&&response.ok){const data=await response.json();return json({...data,email:env.DASHBOARD_EMAIL});}
+  return new Response(response.body,{status:response.status,headers:{'content-type':'application/json'}});
+ }
  const call=(path,data)=>admin(new Request(env.API_ORIGIN+path,{method:data===undefined?'GET':'POST',headers:{authorization:`Bearer ${env.ADMIN_TOKEN}`,'content-type':'application/json'},...(data===undefined?{}:{body:JSON.stringify(data)})}),env,path,deps);
  if(path==='/logout'&&req.method==='POST'){await run(env,'DELETE FROM dashboard_sessions WHERE digest=?',who);return new Response('{"ok":true}',{headers:{'content-type':'application/json','set-cookie':cookie('')}});}
  const config=await dashboardSettings(env);

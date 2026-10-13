@@ -1,4 +1,4 @@
-import {studio,dashboardAPI,dashboardEnv} from './dashboard.js';
+import {studio,tabtabStudio,dashboardAPI,dashboardEnv} from './dashboard.js';
 import { Buffer } from 'node:buffer';
 import { token, hash, hmac, key, email, now, equal, encrypt, escape, unsubscribeToken, verifyResend } from './security.js';
 import { stmt, run, first, all } from './db.js';
@@ -191,7 +191,7 @@ export function createWorker(deps={}) {
         if(path.startsWith('/dashboard/api/'))response=await dashboardAPI(req,await dashboardEnv(env),{body,rate,admin,deps});
         else if(req.method==='GET'&&['/dashboard','/dashboard/','/dashboard/app.js','/dashboard/style.css'].includes(path)){
           const asset=path.endsWith('.js')?['dashboardScript','text/javascript']:path.endsWith('.css')?['dashboardCSS','text/css']:['dashboardHTML','text/html'];
-          response=new Response(studio[asset[0]],{headers:{'content-type':asset[1]+'; charset=utf-8','content-security-policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src 'self'; frame-src 'self' about:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"}});
+          response=new Response((url.searchParams.get('app')==='tabtab'?tabtabStudio:studio)[asset[0]],{headers:{'content-type':asset[1]+'; charset=utf-8','content-security-policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src 'self'; frame-src 'self' about:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"}});
         }
         else if(req.method==='OPTIONS'&&path==='/signup'&&req.headers.get('origin')===env.SITE_ORIGIN)response=new Response(null,{status:204,headers:{'access-control-allow-methods':'POST','access-control-allow-headers':'content-type'}});
         else if(path==='/health'&&req.method==='GET')response=json({ok:true});

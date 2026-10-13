@@ -270,3 +270,24 @@ test('dashboard footer edits invalidate tests, preview escapes HTML and unsafe l
  await api('/settings',{postal_address:'New address',daily_limit:0});assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,400);
  assert.equal((await api('/settings',{postal_address:'Address',daily_limit:5000})).status,400);
 });
+
+test('shared studio scopes TabTab requests and requires the central owner session',async()=>{
+ const x=setup(),api=dashboardClient(x);let calls=[];
+ x.env.DASHBOARD_EMAIL='opencamapp@gmail.com';x.env.SHARED_STUDIO_TOKEN='server-only-token';
+ x.env.TABTAB_STUDIO={fetch:async req=>{calls.push(req);assert.equal(req.headers.get('authorization'),'Bearer server-only-token');assert.equal(req.headers.get('cookie'),null);assert.equal(req.headers.get('origin'),'https://updates.tabtabapp.net');assert.equal(req.headers.get('x-tabtab-dashboard'),'1');return Response.json({email:'tabtab-owner@example.com',contacts:[{id:'tabtab-only'}],total:1});}};
+ assert.equal((await x.req('/dashboard/api/tabtab/overview')).status,401);assert.equal(calls.length,0);
+ assert.equal((await api('/tabtab/settings',{}, {headers:{origin:'https://evil.example'}})).status,403);assert.equal(calls.length,0);
+ assert.equal((await api('/tabtab/admin/export')).status,404);assert.equal((await api('/tabtab/login',{})).status,404);assert.equal(calls.length,0);
+ const overview=await(await api('/tabtab/overview')).json();assert.equal(overview.email,'opencamapp@gmail.com');
+ const contacts=await(await api('/tabtab/contacts?q=one%2Btwo&page=2')).json();assert.equal(contacts.contacts[0].id,'tabtab-only');assert.equal(new URL(calls.at(-1).url).searchParams.get('q'),'one+two');
+ const before=calls.length;await api('/overview');assert.equal(calls.length,before);
+ const d={id:'workspace-test',subject:'TabTab only',markdown:'Hello',preheader:''};assert.equal((await api('/tabtab/campaign',d)).status,200);assert.deepEqual(await calls.at(-1).json(),d);assert.equal(x.row('SELECT COUNT(*) n FROM dashboard_drafts').n,0);
+ await api('/logout',{});assert.equal((await api('/tabtab/overview')).status,401);assert.equal((await api('/overview')).status,401);
+});
+
+test('shared studio serves workspace-specific assets with one auth endpoint',async()=>{
+ const x=setup();
+ const html=await(await x.req('/dashboard?app=tabtab')).text();assert.match(html,/app.js\?app=tabtab/);assert.match(html,/aria-current="page">TabTab/);
+ const js=await(await x.req('/dashboard/app.js?app=tabtab')).text();new Function(js);assert.match(js,/X-OpenCam-Dashboard/);assert.match(js,/"\/dashboard\/api\/tabtab"/);assert.match(js,/"\/dashboard\/api"/);
+ assert.doesNotMatch(html,/server-only-token/);
+});

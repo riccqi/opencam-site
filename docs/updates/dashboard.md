@@ -8,11 +8,14 @@ no confirmation email.
 
 ## Switch apps
 
-Use the OpenCam / TabTab switcher on the sign-in page or sidebar. It saves the
-current draft before leaving and stops if saving fails. Each app keeps its own
-session: OpenCam codes go to opencamapp@gmail.com, TabTab codes to
-xiaochean@gmail.com. Once signed into both, switching reuses those sessions.
-Switching does not copy contacts, drafts, credentials or settings between apps.
+OpenCam and TabTab share one sign-in at the URL above. Use the sidebar app switcher.
+Both workspaces use the session created by the code sent to opencamapp@gmail.com.
+The old TabTab dashboard URL redirects to the TabTab workspace in this studio.
+Signing out revokes access to both workspaces for that session.
+
+Switching saves the current draft and stops if saving fails. Each workspace keeps
+its own database, subscribers, opt-outs, drafts, sender, footer and delivery queue.
+No contacts are copied or combined. The send review names the active app.
 
 ## Write and send
 
@@ -35,15 +38,23 @@ Switching does not copy contacts, drafts, credentials or settings between apps.
 Subscribers provides paginated search, status filters and unsubscribe actions.
 Settings edits the footer mailing address. Resend Pro uses no OpenCam daily cap;
 monthly account usage is shared with TabTab. Each app retains its own list,
-login, settings, suppression records and campaign delivery backend.
+settings, suppression records and campaign delivery backend. Owner login is shared.
 
 ## Shared code
 
-Both deployed Workers use `@riccqi/email-studio` version 1.0.1 from
+Both deployed Workers use `@riccqi/email-studio` version 1.1.0 from
 `packages/email-studio`. OpenCam installs the committed local release tarball;
 TabTab pins that same tarball at an immutable GitHub commit URL in its package lockfile. See the package README for updates.
 The shared code contains no credentials or subscriber data. It provides the
 branded UI and safe Markdown email renderer; each Worker implements the API.
+
+The OpenCam Worker authenticates every workspace request. TabTab requests use a
+Cloudflare service binding plus a server-only `SHARED_STUDIO_TOKEN`, limited to
+TabTab dashboard APIs. This credential cannot access TabTab admin APIs. The
+proxy permits only known dashboard paths, strips browser cookies/authorization,
+and performs origin/CSRF checks before forwarding. Public TabTab login APIs are
+disabled when `STUDIO_URL` is configured. Secrets remain in Worker secret storage
+and ignored private recovery files, never the shared package.
 
 ## Operations
 
