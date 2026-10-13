@@ -1,5 +1,7 @@
+import {renderEmail} from '@riccqi/email-studio/template';
 import { escape, email, hash } from './security.js';
 export function announcement(c, url, postalAddress='') {
+  if(c.markdown!=null)return {subject:c.subject,...renderEmail({subject:c.subject,markdown:c.markdown,preheader:c.preheader,postalAddress:c.postal_address??postalAddress,unsubscribeUrl:url,brand:{name:'OpenCam',domain:'opencam.app',color:'#d45a0b'}}),unsubscribe:url};
   const heading=c.campaign_type==='update'?c.subject:`OpenCam ${c.version}`;
   const download=c.campaign_type==='update'?'':`\n\nDownload: ${c.app_store_url}`;
   const downloadHtml=c.campaign_type==='update'?'':`<p><a href="${escape(c.app_store_url)}">Get OpenCam on the App Store</a></p>`;

@@ -1,3 +1,4 @@
+import {studio,dashboardAPI,dashboardEnv} from './dashboard.js';
 import { Buffer } from 'node:buffer';
 import { token, hash, hmac, key, email, now, equal, encrypt, escape, unsubscribeToken, verifyResend } from './security.js';
 import { stmt, run, first, all } from './db.js';
@@ -187,19 +188,24 @@ export function createWorker(deps={}) {
       let response;
       const url=new URL(req.url),path=url.pathname;
       try {
-        if(req.method==='OPTIONS'&&path==='/signup'&&req.headers.get('origin')===env.SITE_ORIGIN)response=new Response(null,{status:204,headers:{'access-control-allow-methods':'POST','access-control-allow-headers':'content-type'}});
+        if(path.startsWith('/dashboard/api/'))response=await dashboardAPI(req,await dashboardEnv(env),{body,rate,admin,deps});
+        else if(req.method==='GET'&&['/dashboard','/dashboard/','/dashboard/app.js','/dashboard/style.css'].includes(path)){
+          const asset=path.endsWith('.js')?['dashboardScript','text/javascript']:path.endsWith('.css')?['dashboardCSS','text/css']:['dashboardHTML','text/html'];
+          response=new Response(studio[asset[0]],{headers:{'content-type':asset[1]+'; charset=utf-8','content-security-policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src 'self'; frame-src 'self' about:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"}});
+        }
+        else if(req.method==='OPTIONS'&&path==='/signup'&&req.headers.get('origin')===env.SITE_ORIGIN)response=new Response(null,{status:204,headers:{'access-control-allow-methods':'POST','access-control-allow-headers':'content-type'}});
         else if(path==='/health'&&req.method==='GET')response=json({ok:true});
         else if(path==='/signup'&&req.method==='POST')response=await signup(req,env,deps);
         else if(['/confirm','/unsubscribe'].includes(path)&&['GET','POST'].includes(req.method))response=await tokenAction(req,env,path.slice(1));
         else if(path==='/events/resend'&&req.method==='POST')response=await events(req,env,deps);
-        else if(path.startsWith('/admin/'))response=await admin(req,env,path,deps);
+        else if(path.startsWith('/admin/'))response=await admin(req,await dashboardEnv(env),path,deps);
         else response=json({error:'Not found'},404);
-      } catch(e) {response=json({error:e instanceof HttpError?e.message:'Service unavailable. Please try again later.'},e instanceof HttpError?e.status:503);}
+      } catch(e) {response=json({error:e instanceof HttpError||path.startsWith('/dashboard/api/')&&Number.isInteger(e.status)?e.message:'Service unavailable. Please try again later.'},e instanceof HttpError||path.startsWith('/dashboard/api/')&&Number.isInteger(e.status)?e.status:503);}
       response.headers.set('cache-control','no-store');response.headers.set('referrer-policy','no-referrer');response.headers.set('x-content-type-options','nosniff');response.headers.set('x-robots-tag','noindex');
       if(path==='/signup'&&req.headers.get('origin')===env.SITE_ORIGIN){response.headers.set('access-control-allow-origin',env.SITE_ORIGIN);response.headers.set('vary','Origin');}
       return response;
     },
-    async scheduled(_event,env,ctx) {ctx.waitUntil(drain(env,deps).catch(()=>{throw new Error('Queue processing failed; inspect protected delivery status');}));}
+    async scheduled(_event,env,ctx) {ctx.waitUntil(dashboardEnv(env).then(config=>drain(config,deps)).catch(()=>{throw new Error('Queue processing failed; inspect protected delivery status');}));}
   };
 }
 export default createWorker();

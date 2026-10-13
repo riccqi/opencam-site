@@ -70,8 +70,9 @@ Do not email that list during setup or reimport without reviewing later opt-outs
    delivery events and suppression. Inspect MIME for aligned SPF/DKIM/DMARC,
    unsubscribe headers and DKIM coverage of those headers (RFC 8058).
 5. Only after the gate passes, set PUBLIC_UPDATES_ENABLED=true and publish again.
-6. Keep LIVE_SEND_ENABLED=false until an explicit approved release campaign. A
-   public App Store version is independently required by the launch endpoint.
+6. LIVE_SEND_ENABLED=true enables authenticated owner self-service in Email Studio.
+   Every send still needs an exact-content test and explicit subject confirmation.
+   CLI release sends additionally require a public App Store version.
 
 Rollback: disable PUBLIC_UPDATES_ENABLED and PUBLIC_UPDATES_FORM_ENABLED and rebuild
 for the Google Form fallback. SIGNUPS_ENABLED=false pauses signup;

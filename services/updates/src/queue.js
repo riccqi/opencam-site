@@ -21,7 +21,7 @@ export async function drain(env, deps = {}) {
   if (!limit) return;
   const deliveries=await all(env,`UPDATE deliveries SET status='sending',started_at=?,attempts=attempts+1 WHERE id IN (
     SELECT id FROM deliveries WHERE status IN ('queued','retry') AND available_at<=?
-    AND (kind!='announcement' OR ?='true') ORDER BY available_at,id LIMIT ?
+    AND (kind!='announcement' OR (?='true' AND EXISTS(SELECT 1 FROM campaigns c WHERE c.id=deliveries.campaign_id AND c.paused=0))) ORDER BY available_at,id LIMIT ?
     ) AND status IN ('queued','retry') RETURNING *`,t,t,env.LIVE_SEND_ENABLED,limit);
   const prepared=[];
   for(const d of deliveries) {
@@ -34,7 +34,8 @@ export async function drain(env, deps = {}) {
     const current=await first(env,'SELECT status FROM subscribers WHERE email=?',item.recipient);
     if(current?.status==='suppressed'||(item.delivery.kind==='announcement'&&current?.status!=='subscribed')) {
       await run(env,"UPDATE deliveries SET status='skipped',error_code='recipient_ineligible',finished_at=?,payload=NULL WHERE id=? AND status='sending'",now(),item.id);
-    } else ready.push(item);
+    } else if(item.delivery.kind==='announcement'&&(await first(env,'SELECT paused FROM campaigns WHERE id=?',item.delivery.campaign_id))?.paused){await run(env,"UPDATE deliveries SET status='queued' WHERE id=? AND status='sending'",item.id);}
+    else ready.push(item);
   }
   if(!ready.length)return;
   ready.sort((a,b)=>a.id.localeCompare(b.id));
@@ -57,6 +58,7 @@ async function prepare(env,d,t) {
     if (!s || s.status !== 'subscribed') return skip('not_subscribed');
     const c = await first(env,'SELECT * FROM campaigns WHERE id=? AND launched_at IS NOT NULL',d.campaign_id);
     if (!c) return skip('not_launched');
+    if(c.paused){await run(env,"UPDATE deliveries SET status='queued' WHERE id=? AND status='sending'",d.id);return null;}
     const explicitOptIn=['legacy-form-updates-owner-reviewed-2026-10-13','opencam-updates-single-opt-in-v3'].includes(s.consent_version) && !!s.consent_evidence;
     if(!s.confirmed_at && !explicitOptIn)return skip('consent_missing');
     if(c.campaign_type==='update' && s.consent_version!=='opencam-updates-2026-10-13-v2' && !explicitOptIn)return skip('consent_scope');

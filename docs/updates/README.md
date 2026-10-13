@@ -5,7 +5,8 @@ The site stays on GitHub Pages. A separate Cloudflare Worker at
 administration, D1 storage, and an outbox drained by a cron trigger. Resend sends mail through the same account as TabTab. Google is only a legacy migration source, not a
 runtime dependency. TestFlight contacts are excluded.
 
-Start with [deployment](deployment.md), then use the [release runbook](release-runbook.md).
+Use the [Email Studio dashboard](dashboard.md) to write, preview, test and send updates.
+For CLI operations, see [deployment](deployment.md) and the [release runbook](release-runbook.md).
 See [migration findings](migration-report.md) and [verification](verification.md).
 
 ## Local development
@@ -39,7 +40,7 @@ PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA npm run dev
 
 For local Worker HTTP testing, override SITE_ORIGIN, API_ORIGIN and
 TURNSTILE_HOSTNAME to the exact local values. Never deploy the test Turnstile
-secret/sitekey. Production signups are enabled; no confirmation email is sent; live announcements remain disabled.
+secret/sitekey. Production signups are enabled; no confirmation email is sent; owner-reviewed campaigns can be launched from Email Studio.
 
 ## Data and behavior
 
@@ -70,7 +71,7 @@ secret/sitekey. Production signups are enabled; no confirmation email is sent; l
   launch/snapshot insertion. Unique version and campaign-recipient constraints
   prevent duplicate launches and queue entries.
 - Protected CLI uses an environment-held bearer token of at least 32 characters;
-  every admin route enforces it. No public administration UI or credentials in JS.
+  every admin route enforces it. The dashboard uses owner-only email codes and HTTP-only sessions; no credentials are exposed in its JavaScript.
 - Retention: active/opt-out/suppression and delivery records remain until an
   authorized deletion request. Admin deletion cascades per-recipient deliveries.
   Event IDs expire after 30 days; rate records within a day. Restrict DB access,

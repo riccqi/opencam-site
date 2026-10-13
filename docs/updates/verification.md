@@ -4,7 +4,7 @@ Updated 2026-10-13. Resend replaces the original SES plan; no AWS setup is requi
 
 ## Automated checks
 
-29 JavaScript tests plus the Python import test pass, including real workerd/D1 integration. Local checks passed, as did the Astro build and Worker bundle. Tests cover immediate single opt-in without outbound email, legacy confirmation
+32 JavaScript tests plus the Python import test pass, including real workerd/D1 integration. Local checks passed, as did the Astro build and Worker bundle. Tests cover immediate single opt-in without outbound email, legacy confirmation
 expiry/reuse/forgery, scanner-safe GET, RFC 8058 POST, resubscribe, Turnstile and
 rate limits, admin authentication, public App Store version gating, immutable
 campaigns, duplicate launches, queued unsubscribe, postal-address gating,
@@ -14,7 +14,7 @@ callbacks, cross-app isolation and idempotent sending.
 ## Production infrastructure and tests
 
 - Worker `opencam-updates`: https://updates-api.opencam.app. Version
-  `d4c820e7-e7f0-4185-9b48-b5f774d3a712`; D1 migrations 0001 and 0002 applied.
+  `d33430a1-ae14-4f22-87e1-ce09090da656`; D1 migrations 0001–0003 applied.
 - Resend team `xiaochean`: owner upgraded Transactional to Pro, $20/month,
   50,000 shared emails. OpenCam has a separate domain-restricted sending key and
   webhook `bdb1d6a3-8c03-4f6b-8d3a-892104798a1d`. TabTab was not changed.
@@ -46,7 +46,7 @@ callbacks, cross-app isolation and idempotent sending.
 
 ## Operating limits and remaining owner actions
 
-- Homepage and /updates use the verified new signup form. Signups activate immediately without confirmation email. LIVE_SEND_ENABLED remains false.
+- Homepage and /updates use the verified new signup form. Signups activate immediately without confirmation email. LIVE_SEND_ENABLED is now true for owner-reviewed dashboard sends; no campaign is automatically launched.
   POSTAL_ADDRESS now uses the owner-approved TabTab postal address with the OpenCam name. Each campaign also requires explicit owner authorization.
 - Queue submits up to 100 individually addressed messages per minute via the Resend batch API;
   the OpenCam daily cap is disabled. This includes test announcements.
@@ -84,4 +84,13 @@ processes 100 recipients through one intercepted Resend batch request. Tests cov
 ordered acceptance IDs, malformed responses, throttling/backoff, uncertain sends,
 optional cap boundaries, opt-outs, suppression, and the disabled live-send gate.
 No real campaign or email was sent for this change. The postal address was copied
-from TabTab settings with owner approval; LIVE_SEND_ENABLED remains false.
+from TabTab settings with owner approval; LIVE_SEND_ENABLED is now true for owner-reviewed dashboard sends; no campaign is automatically launched.
+
+## Shared Email Studio
+
+OpenCam and TabTab now consume the same versioned UI and Markdown renderer.
+32 OpenCam tests and 14 TabTab tests pass. Dashboard tests cover owner-only OTP,
+single use, secure cookies, CSRF rejection, rate limits, saved drafts, safe preview,
+exact-content test requirements, footer invalidation, immutable launches and
+pause/resume. Production sign-in email arrived in the owner inbox. No subscriber
+campaign is launched during dashboard setup.

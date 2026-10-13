@@ -7,8 +7,8 @@ import {createWorker} from '../src/index.js';
 import {drain} from '../src/queue.js';
 import {hash,now,decrypt,encrypt,token,unsubscribeToken,email} from '../src/security.js';
 import {sendResend,sendResendBatch,announcement,confirmation} from '../src/mail.js';
-function setup() {
- const db=new DatabaseSync(':memory:');db.exec(['0001_initial.sql','0002_general_updates.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n'));
+function setup(options={}) {
+ const db=new DatabaseSync(':memory:');db.exec(['0001_initial.sql','0002_general_updates.sql','0003_dashboard.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n'));
  const DB={prepare(sql){return {bind(...args){return {async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}};},async first(){return db.prepare(sql).get(...args)||null;},async all(){return {results:db.prepare(sql).all(...args)};}};} };},async batch(statements){db.exec('BEGIN');try{const result=[];for(const s of statements)result.push(await s.run());db.exec('COMMIT');return result;}catch(e){db.exec('ROLLBACK');throw e;}}};
  const env={DB,POSTAL_ADDRESS:'Test postal address',ADMIN_TOKEN:'a'.repeat(40),TOKEN_KEY:'ab'.repeat(32),DATA_KEY:'cd'.repeat(32),RATE_KEY:'ef'.repeat(32),SITE_ORIGIN:'https://opencam.app',API_ORIGIN:'https://updates-api.opencam.app',RESEND_WEBHOOK_SECRET:'whsec_'+Buffer.alloc(32,7).toString('base64'),SIGNUPS_ENABLED:'true',SENDING_ENABLED:'true',LIVE_SEND_ENABLED:'true',DAILY_SEND_LIMIT:'100',TURNSTILE_SECRET:'test',TURNSTILE_HOSTNAME:'opencam.app',TEST_RECIPIENTS:'delivered@resend.dev',REPLY_TO:'richard@opencam.app',RESEND_API_KEY:'test-key'};
  const fetcher=async(url)=>{
@@ -16,7 +16,7 @@ function setup() {
   if(String(url).includes('itunes.apple.com'))return Response.json({results:[{trackId:6743316690,version:'2.1.0'}]});
   throw new Error('Unexpected network call');
  };
- const worker=createWorker({fetch:fetcher});
+ const worker=createWorker({fetch:fetcher,...options});
  const req=(path,data,extra={})=>worker.fetch(new Request(`${env.API_ORIGIN}${path}`,{method:data===undefined?'GET':'POST',headers:{origin:env.SITE_ORIGIN,'content-type':'application/json','CF-Connecting-IP':'192.0.2.1',...(path.startsWith('/admin/')?{authorization:`Bearer ${env.ADMIN_TOKEN}`}:{})},...(data===undefined?{}:{body:JSON.stringify(data)}),...extra}),env);
  const row=(sql,...args)=>db.prepare(sql).get(...args);
  const signup=(address='person@example.com')=>req('/signup',{email:address,turnstile:'valid',source:'app'});
@@ -231,4 +231,42 @@ test('whole-batch throttling retries later and uncertain acceptance never auto-r
  await drain(x.env,{sendBatch:async(_env,items)=>items.map(()=>({status:'ambiguous',code:'transport_uncertain'}))});
  x.unlock();await drain(x.env,{sendBatch:async()=>{throw Error('Uncertain batch must stay held');}});
  assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='ambiguous'").n,4);
+});
+
+function dashboardClient(x){const session=token();x.db.prepare('INSERT INTO dashboard_sessions VALUES(?,?)').run(hash(session),now()+3600);return (path,data,extra={})=>x.req('/dashboard/api'+path,data,{headers:{origin:x.env.API_ORIGIN,'content-type':'application/json','x-opencam-dashboard':'1',cookie:'__Host-opencam_session='+session},...extra});}
+test('dashboard login is owner-only, bounded, single-use and uses secure sessions',async()=>{
+ let code,sent=0;const x=setup({sendLogin:async(env,to,message)=>{assert.equal(to,'opencamapp@gmail.com');code=message.text.match(/\d{8}/)[0];sent++;return {status:'sent'};}});x.env.DASHBOARD_EMAIL='opencamapp@gmail.com';
+ const req=(path,data,headers={})=>x.req('/dashboard/api'+path,data,{headers:{origin:x.env.API_ORIGIN,'content-type':'application/json','x-opencam-dashboard':'1',...headers}});
+ assert.equal((await req('/overview')).status,401);assert.equal((await req('/login',{}, {origin:'https://evil.example'})).status,403);
+ const r=await req('/login',{email:'attacker@example.com'}),d=await r.json();assert.equal(sent,1);
+ assert.equal((await req('/verify',{id:d.id,code:'00000000'})).status,401);
+ const verified=await req('/verify',{id:d.id,code});assert.equal(verified.status,200);assert.match(verified.headers.get('set-cookie'),/Secure; HttpOnly; SameSite=Strict/);
+ const cookie=verified.headers.get('set-cookie').split(';')[0];assert.equal((await req('/overview',undefined,{cookie})).status,200);
+ assert.equal((await req('/verify',{id:d.id,code})).status,401);await req('/logout',{}, {cookie});assert.equal((await req('/overview',undefined,{cookie})).status,401);
+ for(let i=0;i<5;i++)await req('/login',{});assert.ok(sent<=3);
+});
+test('dashboard draft, exact tested content, launch, pause, resume and immutable send',async()=>{
+ const x=setup(),api=dashboardClient(x);await x.signup();const d={id:'draft-test',subject:'Hello',markdown:'# News\n\n**Hello** [site](https://opencam.app)',preheader:'This week'};
+ assert.equal((await api('/campaign',d)).status,200);const preview=await(await api('/preview',d)).json();assert.match(preview.html,/<strong>Hello<\/strong>/);assert.match(preview.html,/OpenCam/);
+ assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,400);
+ assert.equal((await api('/campaign/'+d.id+'/test',{email:'stranger@example.com'})).status,403);
+ assert.equal((await api('/campaign/'+d.id+'/test',{email:'delivered@resend.dev'})).status,200);
+ assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,400);
+ await drain(x.env,{send:async()=>({status:'sent',messageId:'test-id'})});
+ await api('/campaign',{...d,markdown:'Changed'});assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,400);
+ await api('/campaign',d);assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:'wrong'})).status,400);
+ assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,200);
+ assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,200);
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE kind='announcement'").n,1);
+ assert.equal((await api('/campaign',{...d,subject:'Edit sent'})).status,409);
+ await api('/campaign/'+d.id+'/pause',{});x.unlock();await drain(x.env,{send:async()=>{throw Error('Paused');}});
+ await api('/campaign/'+d.id+'/resume',{});x.unlock();let sends=0;await drain(x.env,{send:async(_env,_to,message)=>{sends++;assert.match(message.html,/<strong>Hello<\/strong>/);return {status:'sent',messageId:'live-id'};}});assert.equal(sends,1);
+ const overview=await(await api('/overview')).json();assert.equal(overview.campaigns[0].state,'completed');assert.equal(overview.campaigns[0].sent,1);
+});
+test('dashboard footer edits invalidate tests, preview escapes HTML and unsafe links',async()=>{
+ const x=setup(),api=dashboardClient(x),d={id:'draft-footer',subject:'<script>x</script>',markdown:'<script>alert(1)</script> [bad](javascript:alert(1))',preheader:'<x>'};await api('/campaign',d);
+ const preview=await(await api('/preview',d)).json();assert.ok(!preview.html.includes('<script>'));assert.ok(!preview.html.includes('href="javascript:'));
+ await api('/campaign/'+d.id+'/test',{email:'delivered@resend.dev'});await drain(x.env,{send:async()=>({status:'sent',messageId:'test-footer'})});
+ await api('/settings',{postal_address:'New address',daily_limit:0});assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,400);
+ assert.equal((await api('/settings',{postal_address:'Address',daily_limit:5000})).status,400);
 });

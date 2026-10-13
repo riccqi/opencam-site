@@ -18,7 +18,8 @@
     "TURNSTILE_HOSTNAME": "opencam.app",
     "SIGNUPS_ENABLED": "true",
     "SENDING_ENABLED": "true",
-    "LIVE_SEND_ENABLED": "false",
+    "LIVE_SEND_ENABLED": "true",
+    "DASHBOARD_EMAIL": "opencamapp@gmail.com",
     "DAILY_SEND_LIMIT": "0",
     "TEST_RECIPIENTS": "xiaochean@gmail.com,opencamapp@gmail.com,delivered@resend.dev,bounced@resend.dev,complained@resend.dev,suppressed@resend.dev"
   }

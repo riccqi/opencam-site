@@ -11,10 +11,13 @@
     "admin": "node scripts/admin.mjs"
   },
   "devDependencies": {
-    "wrangler": "4.150.0",
-    "miniflare": "5.20261006.2-beta"
+    "miniflare": "5.20261006.2-beta",
+    "wrangler": "4.150.0"
   },
   "engines": {
     "node": ">=22.13"
+  },
+  "dependencies": {
+    "@riccqi/email-studio": "file:../../packages/releases/riccqi-email-studio-1.0.0.tgz"
   }
 }

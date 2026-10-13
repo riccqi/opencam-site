@@ -41,7 +41,7 @@ inventing confirmation timestamps. Release campaigns retain the App Store gate.
 
 Production verification: 1,725 legacy subscribed, one owner test unsubscribed,
 three simulator addresses suppressed, zero pending deliveries and zero launched
-campaigns. LIVE_SEND_ENABLED remains false. The postal address has since been configured using the owner-approved TabTab address.
+campaigns. Email Studio now allows owner-reviewed campaign launches. The postal address has since been configured using the owner-approved TabTab address.
 
 Private artifacts in gitignored private/updates (directory 0700, files 0600):
 - waitlist-import-source.private.csv — fresh source export
