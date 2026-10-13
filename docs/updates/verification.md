@@ -4,7 +4,7 @@ Updated 2026-10-13. Resend replaces the original SES plan; no AWS setup is requi
 
 ## Automated checks
 
-32 JavaScript tests plus the Python import test pass, including real workerd/D1 integration. Local checks passed, as did the Astro build and Worker bundle. Tests cover immediate single opt-in without outbound email, legacy confirmation
+35 JavaScript tests plus the Python import test pass, including real workerd/D1 integration. Local checks passed, as did the Astro build and Worker bundle. Tests cover immediate single opt-in without outbound email, legacy confirmation
 expiry/reuse/forgery, scanner-safe GET, RFC 8058 POST, resubscribe, Turnstile and
 rate limits, admin authentication, public App Store version gating, immutable
 campaigns, duplicate launches, queued unsubscribe, postal-address gating,
@@ -14,7 +14,7 @@ callbacks, cross-app isolation and idempotent sending.
 ## Production infrastructure and tests
 
 - Worker `opencam-updates`: https://updates-api.opencam.app. Version
-  `d33430a1-ae14-4f22-87e1-ce09090da656`; D1 migrations 0001–0003 applied.
+  `6eff63d6-303a-4942-8a7e-d91b33eea19c`; D1 migrations 0001–0003 applied.
 - Resend team `xiaochean`: owner upgraded Transactional to Pro, $20/month,
   50,000 shared emails. OpenCam has a separate domain-restricted sending key and
   webhook `bdb1d6a3-8c03-4f6b-8d3a-892104798a1d`. TabTab was not changed.
@@ -102,3 +102,27 @@ setup test — OpenCam` arrived in opencamapp@gmail.com with SPF, DKIM and DMARC
 passing. It includes the configured postal address and a preview-only unsubscribe
 link; subscriber sends use individual unsubscribe links. The setup draft remains
 unsent. Both GitHub Actions checks for e2b079b passed.
+
+
+## Unified owner login and isolated workspaces
+
+Both apps use shared Email Studio 1.1.1. OpenCam hosts the owner session and
+proxies an allowlist of TabTab dashboard routes through a service binding with a
+dashboard-only server credential. TabTab's old dashboard URL redirects to the
+shared studio. Its direct dashboard API rejects old local sessions when central
+studio mode is enabled. Subscriber databases and senders remain separate.
+
+35 OpenCam tests and 15 TabTab tests pass, including execution of the bundled
+browser script to verify actual workspace API and login routing. Production
+checks confirmed switching between the two distinct lists/drafts under one
+session, saving before switching, correct TabTab preview and send-review audience,
+and HTTP 401 for anonymous access to both workspace APIs and the direct TabTab
+API. Both setup drafts remain unsent. No campaigns or new test emails were sent
+for this revision. OpenCam CI and GitHub Pages deployment passed for 2916855.
+TabTab Worker version: 6feb30d3-c1c4-4feb-b8e5-fe60a9750326.
+
+Both repositories are public. Secret files and private contact exports are ignored.
+A focused scan of the local Git histories (306 OpenCam and 642 TabTab blobs before
+this revision) found no literal matches for the current stored credentials. This
+is not a comprehensive security audit. Public websites remain on GitHub Pages;
+Workers, D1 data and secret storage remain on Cloudflare.
