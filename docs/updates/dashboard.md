@@ -38,7 +38,8 @@ No contacts are copied or combined. The send review names the active app.
 Subscribers provides paginated search, status filters and unsubscribe actions.
 Settings edits the footer mailing address. Resend Pro uses no OpenCam daily cap;
 monthly account usage is shared with TabTab. Each app retains its own list,
-settings, suppression records and campaign delivery backend. Owner login is shared.
+settings, suppression records and database; both deliver through the same shared
+outbox module. Owner login is shared.
 
 ## Shared code
 

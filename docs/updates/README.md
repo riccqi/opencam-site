@@ -80,8 +80,10 @@ secret/sitekey. Production signups are enabled; no confirmation email is sent; o
 ## Delivery semantics
 
 The durable outbox submits up to **100 individually addressed messages per minute**
-using one Resend batch API request. The production daily cap is disabled
-(`DAILY_SEND_LIMIT=0`); a positive value optionally restores a rolling 24-hour cap.
+using one Resend batch API request. The queue rules live in the shared
+`@riccqi/email-studio/outbox` module, which TabTab's Worker also uses against its own
+database; `src/queue.js` only supplies OpenCam's eligibility checks and messages.
+Resend Pro has no daily cap, so none is applied.
 The 1,725-person starting list takes 18 cron runs, roughly 18 minutes in normal
 conditions, with additional time for retries or provider delays. Resend acceptance
 does not guarantee immediate inbox delivery. Check remaining shared monthly quota

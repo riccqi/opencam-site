@@ -1,73 +1,46 @@
-import { now, decrypt, unsubscribeToken, token } from './security.js';
-import { run, first, all, stmt } from './db.js';
-import { sendResendBatch, announcement } from './mail.js';
+import { drain as drainOutbox } from '@riccqi/email-studio/outbox';
+import { now, decrypt, unsubscribeToken } from './security.js';
+import { run, all } from './db.js';
+import { announcement, sender } from './mail.js';
+const ids = rows => JSON.stringify([...new Set(rows)]);
+const explicitOptIn = s => ['legacy-form-updates-owner-reviewed-2026-10-13','opencam-updates-single-opt-in-v3'].includes(s.consent_version) && !!s.consent_evidence;
+
+// Turns claimed deliveries into emails with a fixed number of queries per batch.
+async function prepare(env, deliveries) {
+  const announcements = deliveries.filter(d => d.kind === 'announcement');
+  const subscribers = Object.fromEntries((await all(env,'SELECT s.* FROM json_each(?) j JOIN subscribers s ON s.id=j.value',ids(announcements.map(d => d.subscriber_id)))).map(s => [s.id,s]));
+  const campaigns = Object.fromEntries((await all(env,'SELECT c.* FROM json_each(?) j JOIN campaigns c ON c.id=j.value',ids(announcements.map(d => d.campaign_id)))).map(c => [c.id,c]));
+  const tests = deliveries.filter(d => d.kind === 'test').map(d => ({id:d.id,...decrypt(env,d.payload)}));
+  const suppressed = new Set((await all(env,"SELECT s.email FROM json_each(?) j JOIN subscribers s ON s.email=j.value WHERE s.status='suppressed'",ids(tests.map(t => t.recipient)))).map(s => s.email));
+  const allowed = (env.TEST_RECIPIENTS || '').split(',').map(s => s.trim().toLowerCase());
+  return deliveries.map(d => {
+    if (d.kind === 'confirmation') return {skip:'confirmation_disabled'};
+    if (d.kind === 'test') {
+      const t = tests.find(x => x.id === d.id);
+      if (!allowed.includes(t.recipient)) return {skip:'test_not_allowed'};
+      return suppressed.has(t.recipient) ? {skip:'recipient_ineligible'} : {recipient:t.recipient,message:t.message};
+    }
+    if (!env.POSTAL_ADDRESS?.trim()) return {skip:'postal_address_missing'};
+    const s = subscribers[d.subscriber_id], c = campaigns[d.campaign_id];
+    if (!s || s.status !== 'subscribed') return {skip:'not_subscribed'};
+    if (!c?.launched_at) return {skip:'not_launched'};
+    if (c.paused) return {hold:true};
+    if (!s.confirmed_at && !explicitOptIn(s)) return {skip:'consent_missing'};
+    if (c.campaign_type === 'update' && s.consent_version !== 'opencam-updates-2026-10-13-v2' && !explicitOptIn(s)) return {skip:'consent_scope'};
+    return {recipient:s.email,message:announcement(c,`${env.API_ORIGIN}/unsubscribe?token=${unsubscribeToken(env,s.id)}`,env.POSTAL_ADDRESS)};
+  });
+}
+
 export async function drain(env, deps = {}) {
   const t = now();
-  // No automatic retry after a crash in the send/record gap.
-  await run(env, "UPDATE deliveries SET status='ambiguous',error_code='interrupted',payload=NULL WHERE status='sending' AND started_at < ?", t-300);
   await run(env, 'DELETE FROM rate_limits WHERE expires < ?', t);
-  await run(env, 'DELETE FROM send_reservations WHERE created_at < ?', t-86400);
   await run(env, 'DELETE FROM events WHERE received_at < ?', t-30*86400);
-  await run(env, "UPDATE deliveries SET payload=NULL WHERE finished_at < ?", t-86400);
   await run(env, "DELETE FROM subscribers WHERE status='pending' AND last_confirmation_at < ?", t-30*86400);
   if (env.SENDING_ENABLED !== 'true') return;
-  // One atomic batch claim per minute across overlapping cron invocations.
-  const reserved = await first(env,'UPDATE send_lock SET next_at=? WHERE id=1 AND next_at<=? RETURNING id',t+60,t);
-  if (!reserved) return;
-  const cap=Number(env.DAILY_SEND_LIMIT ?? 0);
-  if (!Number.isSafeInteger(cap) || cap<0) throw new Error('Invalid daily send limit');
-  const used=cap ? (await first(env,'SELECT count(*) n FROM send_reservations WHERE created_at>?',t-86400)).n : 0;
-  const limit=cap ? Math.max(0,Math.min(100,cap-used)) : 100;
-  if (!limit) return;
-  const deliveries=await all(env,`UPDATE deliveries SET status='sending',started_at=?,attempts=attempts+1 WHERE id IN (
-    SELECT id FROM deliveries WHERE status IN ('queued','retry') AND available_at<=?
-    AND (kind!='announcement' OR (?='true' AND EXISTS(SELECT 1 FROM campaigns c WHERE c.id=deliveries.campaign_id AND c.paused=0))) ORDER BY available_at,id LIMIT ?
-    ) AND status IN ('queued','retry') RETURNING *`,t,t,env.LIVE_SEND_ENABLED,limit);
-  const prepared=[];
-  for(const d of deliveries) {
-    const item=await prepare(env,d,t);
-    if(item) prepared.push({...item,id:d.id,delivery:d});
-  }
-  // Recheck every recipient after preparation, immediately before provider handoff.
-  const ready=[];
-  for(const item of prepared) {
-    const current=await first(env,'SELECT status FROM subscribers WHERE email=?',item.recipient);
-    if(current?.status==='suppressed'||(item.delivery.kind==='announcement'&&current?.status!=='subscribed')) {
-      await run(env,"UPDATE deliveries SET status='skipped',error_code='recipient_ineligible',finished_at=?,payload=NULL WHERE id=? AND status='sending'",now(),item.id);
-    } else if(item.delivery.kind==='announcement'&&(await first(env,'SELECT paused FROM campaigns WHERE id=?',item.delivery.campaign_id))?.paused){await run(env,"UPDATE deliveries SET status='queued' WHERE id=? AND status='sending'",item.id);}
-    else ready.push(item);
-  }
-  if(!ready.length)return;
-  ready.sort((a,b)=>a.id.localeCompare(b.id));
-  await env.DB.batch(ready.map(()=>stmt(env,'INSERT INTO send_reservations VALUES(?,?)',token(),now())));
-  const results=deps.send ? await Promise.all(ready.map(i=>deps.send(env,i.recipient,i.message,i.id)))
-    : await (deps.sendBatch || sendResendBatch)(env,ready);
-  await env.DB.batch(ready.map((item,i)=>{
-    const d=item.delivery,result=results[i]||{status:'ambiguous',code:'missing_batch_result'};
-    const status=result.status==='retry'&&d.attempts>=5?'failed':result.status;
-    return stmt(env,`UPDATE deliveries SET status=?,message_id=?,error_code=?,available_at=?,finished_at=?,payload=CASE WHEN ?='retry' THEN payload ELSE NULL END WHERE id=? AND status='sending'`,
-      status,result.messageId||null,result.code||null,now()+Math.min(3600,60*2**d.attempts),status==='retry'?null:now(),status,d.id);
-  }));
-}
-async function prepare(env,d,t) {
-  let recipient, message;
-  const skip = async code => { await run(env,"UPDATE deliveries SET status='skipped',error_code=?,finished_at=?,payload=NULL WHERE id=? AND status='sending'",code,t,d.id); return null; };
-  if (d.kind === 'announcement') {
-    if(!env.POSTAL_ADDRESS?.trim())return skip('postal_address_missing');
-    const s = await first(env,'SELECT * FROM subscribers WHERE id=?',d.subscriber_id);
-    if (!s || s.status !== 'subscribed') return skip('not_subscribed');
-    const c = await first(env,'SELECT * FROM campaigns WHERE id=? AND launched_at IS NOT NULL',d.campaign_id);
-    if (!c) return skip('not_launched');
-    if(c.paused){await run(env,"UPDATE deliveries SET status='queued' WHERE id=? AND status='sending'",d.id);return null;}
-    const explicitOptIn=['legacy-form-updates-owner-reviewed-2026-10-13','opencam-updates-single-opt-in-v3'].includes(s.consent_version) && !!s.consent_evidence;
-    if(!s.confirmed_at && !explicitOptIn)return skip('consent_missing');
-    if(c.campaign_type==='update' && s.consent_version!=='opencam-updates-2026-10-13-v2' && !explicitOptIn)return skip('consent_scope');
-    recipient=s.email; message=announcement(c,`${env.API_ORIGIN}/unsubscribe?token=${unsubscribeToken(env,s.id)}`,env.POSTAL_ADDRESS);
-  } else {
-    if (d.kind === 'confirmation') return skip('confirmation_disabled');
-    const payload=decrypt(env,d.payload);
-    recipient=payload.recipient; message=payload.message;
-  }
-  if (d.kind==='test' && !(env.TEST_RECIPIENTS||'').split(',').map(s=>s.trim().toLowerCase()).includes(recipient)) return skip('test_not_allowed');
-  return {recipient,message};
+  return drainOutbox(env, {
+    sender: sender(env),
+    // Paused or not-yet-enabled campaigns stay queued without being claimed.
+    claimable: {sql:"kind!='announcement' OR (?='true' AND EXISTS(SELECT 1 FROM campaigns c WHERE c.id=deliveries.campaign_id AND c.paused=0))",args:[env.LIVE_SEND_ENABLED]},
+    prepare
+  }, deps);
 }

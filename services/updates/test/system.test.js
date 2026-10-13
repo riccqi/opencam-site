@@ -8,9 +8,9 @@ import {drain} from '../src/queue.js';
 import {hash,now,decrypt,encrypt,token,unsubscribeToken,email} from '../src/security.js';
 import {sendResend,sendResendBatch,announcement,confirmation} from '../src/mail.js';
 function setup(options={}) {
- const db=new DatabaseSync(':memory:');db.exec(['0001_initial.sql','0002_general_updates.sql','0003_dashboard.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n'));
+ const db=new DatabaseSync(':memory:');db.exec(['0001_initial.sql','0002_general_updates.sql','0003_dashboard.sql','0004_drop_send_reservations.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n'));
  const DB={prepare(sql){return {bind(...args){return {async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}};},async first(){return db.prepare(sql).get(...args)||null;},async all(){return {results:db.prepare(sql).all(...args)};}};} };},async batch(statements){db.exec('BEGIN');try{const result=[];for(const s of statements)result.push(await s.run());db.exec('COMMIT');return result;}catch(e){db.exec('ROLLBACK');throw e;}}};
- const env={DB,POSTAL_ADDRESS:'Test postal address',ADMIN_TOKEN:'a'.repeat(40),TOKEN_KEY:'ab'.repeat(32),DATA_KEY:'cd'.repeat(32),RATE_KEY:'ef'.repeat(32),SITE_ORIGIN:'https://opencam.app',API_ORIGIN:'https://updates-api.opencam.app',RESEND_WEBHOOK_SECRET:'whsec_'+Buffer.alloc(32,7).toString('base64'),SIGNUPS_ENABLED:'true',SENDING_ENABLED:'true',LIVE_SEND_ENABLED:'true',DAILY_SEND_LIMIT:'100',TURNSTILE_SECRET:'test',TURNSTILE_HOSTNAME:'opencam.app',TEST_RECIPIENTS:'delivered@resend.dev',REPLY_TO:'richard@opencam.app',RESEND_API_KEY:'test-key'};
+ const env={DB,POSTAL_ADDRESS:'Test postal address',ADMIN_TOKEN:'a'.repeat(40),TOKEN_KEY:'ab'.repeat(32),DATA_KEY:'cd'.repeat(32),RATE_KEY:'ef'.repeat(32),SITE_ORIGIN:'https://opencam.app',API_ORIGIN:'https://updates-api.opencam.app',RESEND_WEBHOOK_SECRET:'whsec_'+Buffer.alloc(32,7).toString('base64'),SIGNUPS_ENABLED:'true',SENDING_ENABLED:'true',LIVE_SEND_ENABLED:'true',TURNSTILE_SECRET:'test',TURNSTILE_HOSTNAME:'opencam.app',TEST_RECIPIENTS:'delivered@resend.dev',REPLY_TO:'richard@opencam.app',RESEND_API_KEY:'test-key'};
  const fetcher=async(url)=>{
   if(String(url).includes('siteverify'))return Response.json({success:true,hostname:'opencam.app',action:'signup'});
   if(String(url).includes('itunes.apple.com'))return Response.json({results:[{trackId:6743316690,version:'2.1.0'}]});
@@ -82,10 +82,10 @@ test('unsubscribe and suppression while queued prevent announcement send',async(
  let sends=0;for(let i=0;i<3;i++){x.unlock();await drain(x.env,{send:async()=>{sends++;return {status:'sent',messageId:'a'};}});}
  assert.equal(sends,0);assert.equal(x.row("SELECT status FROM deliveries WHERE kind='announcement'").status,'skipped');
 });
-test('accepted sends are recorded and never repeated; rolling quota and minute lock apply',async()=>{
+test('accepted sends are recorded and never repeated; the minute lock applies',async()=>{
  const x=setup();await x.queuedTest();let sends=0;const deps={send:async()=>{sends++;return {status:'sent',messageId:'ses-id'};}};
  await drain(x.env,deps);await drain(x.env,deps);assert.equal(sends,1);assert.equal(x.row('SELECT message_id FROM deliveries').message_id,'ses-id');
- await x.queuedTest();x.unlock();x.env.DAILY_SEND_LIMIT='1';await drain(x.env,deps);assert.equal(sends,1);
+ await x.queuedTest();await drain(x.env,deps);assert.equal(sends,1);x.unlock();await drain(x.env,deps);assert.equal(sends,2);
 });
 test('explicit throttling is retried; transport ambiguity is held',async()=>{
  const x=setup();await x.queuedTest();await drain(x.env,{send:async()=>({status:'retry',code:'throttled'})});assert.equal(x.row('SELECT status FROM deliveries').status,'retry');
@@ -181,7 +181,7 @@ test('reviewed legacy form consent is sendable without inventing mailbox confirm
 });
 
 async function seededCampaign(n) {
- const x=setup();x.env.DAILY_SEND_LIMIT='0';
+ const x=setup();
  const insert=x.db.prepare("INSERT INTO subscribers(id,email,status,source,signup_at,consent_version,unsubscribe_hash,last_confirmation_at,consent_evidence) VALUES(?,?,'subscribed','website',?,'opencam-updates-single-opt-in-v3',?,0,'{\"method\":\"website_single_opt_in\"}')");
  for(let i=0;i<n;i++)insert.run(`sub-${i}`,`person${i}@example.com`,now(),hash(`unsub-${i}`));
  const c=await(await x.req('/admin/campaigns',{kind:'update',key:'batch-test',subject:'News',notes:'Hello'})).json();
@@ -202,16 +202,16 @@ test('1725-person campaign completes in 18 batches with overlap protection and n
  assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='sent'").n,1725);
  x.unlock();await drain(x.env,deps);assert.equal(sizes.length,18);
 });
-test('batch eligibility, disabled campaign gate, and optional daily cap are preserved',async()=>{
+test('batch eligibility and the disabled campaign gate are preserved',async()=>{
  const x=await seededCampaign(5);x.env.LIVE_SEND_ENABLED='false';
  await drain(x.env,{sendBatch:async()=>{throw Error('Disabled campaign');}});
  assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='queued'").n,5);
- x.env.LIVE_SEND_ENABLED='true';x.env.DAILY_SEND_LIMIT='2';
+ x.env.LIVE_SEND_ENABLED='true';
  x.db.exec("UPDATE subscribers SET status='unsubscribed' WHERE id='sub-0'; UPDATE subscribers SET status='suppressed' WHERE id='sub-1'");
  const sent=[];const deps={sendBatch:async(_env,items)=>{sent.push(...items.map(i=>i.recipient));return items.map(i=>({status:'sent',messageId:i.id}));}};
  for(let i=0;i<5;i++){x.unlock();await drain(x.env,deps);}
- assert.equal(sent.length,2);assert.ok(!sent.includes('person0@example.com'));assert.ok(!sent.includes('person1@example.com'));
- assert.equal(x.row("SELECT count(*) n FROM deliveries d JOIN subscribers s ON s.id=d.subscriber_id WHERE d.status='queued' AND s.status='subscribed'").n,1);
+ assert.equal(sent.length,3);assert.ok(!sent.includes('person0@example.com'));assert.ok(!sent.includes('person1@example.com'));
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='skipped'").n,2);assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='queued'").n,0);
 });
 test('batch provider handles throttle, uncertainty, malformed responses and ordered IDs',async()=>{
  const x=setup(),items=[0,1].map(i=>({id:`id-${i}`,recipient:`p${i}@example.com`,message:{subject:'Hi',text:'Hello',html:'Hello'}}));
@@ -267,8 +267,8 @@ test('dashboard footer edits invalidate tests, preview escapes HTML and unsafe l
  const x=setup(),api=dashboardClient(x),d={id:'draft-footer',subject:'<script>x</script>',markdown:'<script>alert(1)</script> [bad](javascript:alert(1))',preheader:'<x>'};await api('/campaign',d);
  const preview=await(await api('/preview',d)).json();assert.ok(!preview.html.includes('<script>'));assert.ok(!preview.html.includes('href="javascript:'));
  await api('/campaign/'+d.id+'/test',{email:'delivered@resend.dev'});await drain(x.env,{send:async()=>({status:'sent',messageId:'test-footer'})});
- await api('/settings',{postal_address:'New address',daily_limit:0});assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,400);
- assert.equal((await api('/settings',{postal_address:'Address',daily_limit:5000})).status,400);
+ await api('/settings',{postal_address:'New address'});assert.equal((await api('/campaign/'+d.id+'/start',{confirmation:d.subject})).status,400);
+ assert.equal((await api('/settings',{postal_address:'  '})).status,400);
 });
 
 test('shared studio scopes TabTab requests and requires the central owner session',async()=>{

@@ -45,9 +45,9 @@ SES/SNS/IAM setup is superseded; no AWS account is required for this system.
 7. Verify signed callbacks using delivered@resend.dev, bounced@resend.dev,
    complained@resend.dev and suppressed@resend.dev. Test mail counts toward quota.
    Webhook logs must show 2xx; bounce/complaint/suppression must update D1.
-8. Check shared account usage before raising DAILY_SEND_LIMIT. OpenCam starts at
-   up to 100 emails per minute via the batch API, with DAILY_SEND_LIMIT=0 (no daily cap); announcements remain gated off. The limit is
-   local to OpenCam; TabTab usage also consumes Resend's account quota. Pro permits
+8. Check shared account usage before large campaigns. OpenCam and TabTab each send
+   up to 100 emails per minute via the batch API with no daily cap (shared outbox
+   module); announcements remain gated off. TabTab usage also consumes Resend's account quota. Pro permits
    50,000 emails/month and 10 domains for $20/month at the checked pricing; no paid
    upgrade or add-on is automatic. Keep overage billing off unless authorized.
 

@@ -4,6 +4,7 @@ import { token, hash, hmac, key, email, now, equal, encrypt, escape, unsubscribe
 import { stmt, run, first, all } from './db.js';
 import { announcement } from './mail.js';
 import { drain } from './queue.js';
+import { reconcileStatement } from '@riccqi/email-studio/outbox';
 const CONSENT='opencam-updates-single-opt-in-v3';
 const generic={message:'Thanks for subscribing to OpenCam updates. You can unsubscribe anytime.'};
 class HttpError extends Error { constructor(status,message) { super(message);this.status=status; } }
@@ -92,9 +93,7 @@ async function events(req,env) {
         VALUES(?,?,'suppressed','resend-event',?,'none',?,0,?) ON CONFLICT(email) DO UPDATE SET status='suppressed',suppression_reason=excluded.suppression_reason,confirm_hash=NULL,confirm_expires=NULL`,id,address,now(),hash(unsubscribeToken(env,id)),type.slice(6)));
     }
   }
-  const tags=e.data?.tags;
-  const deliveryId=Array.isArray(tags)?tags.find(t=>t.name==='delivery_id')?.value:tags?.delivery_id;
-  if(['email.sent','email.delivered','email.bounced','email.complained','email.suppressed'].includes(type) && typeof deliveryId==='string' && typeof e.data?.email_id==='string')statements.push(stmt(env,`UPDATE deliveries SET status='sent',message_id=?,error_code=NULL,finished_at=?,payload=NULL WHERE id=? AND status IN ('sending','ambiguous')`,e.data.email_id,now(),deliveryId));
+  const settled=reconcileStatement(env,e);if(settled)statements.push(settled);
   await env.DB.batch(statements);
   return json({ok:true});
 }

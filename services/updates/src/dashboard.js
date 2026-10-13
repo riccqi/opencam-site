@@ -1,17 +1,18 @@
 import {createDashboard} from '@riccqi/email-studio/ui';
 import {renderEmail} from '@riccqi/email-studio/template';
+import {sentLastDay} from '@riccqi/email-studio/outbox';
 import {token,hash,hmac,equal,now,email} from './security.js';
 import {run,first,all,stmt} from './db.js';
 import {sendResend,announcement} from './mail.js';
 const workspaceLinks=[{name:'OpenCam',url:'/dashboard?app=opencam'},{name:'TabTab',url:'/dashboard?app=tabtab'}];
 const shared={workspaceLinks,authBase:'/dashboard/api',authHeader:'X-OpenCam-Dashboard',signInEmail:'opencamapp@gmail.com'};
-export const studio=createDashboard({...shared,name:'OpenCam',domain:'opencam.app',initial:'O',color:'#d45a0b',sources:'OpenCam website signups and your reviewed starting list.',uncapped:true,markdownLimit:12000,assetQuery:'?app=opencam'});
-export const tabtabStudio=createDashboard({...shared,uncapped:true,apiBase:'/dashboard/api/tabtab',assetQuery:'?app=tabtab'});
+export const studio=createDashboard({...shared,name:'OpenCam',domain:'opencam.app',initial:'O',color:'#d45a0b',sources:'OpenCam website signups and your reviewed starting list.',markdownLimit:12000,assetQuery:'?app=opencam'});
+export const tabtabStudio=createDashboard({...shared,apiBase:'/dashboard/api/tabtab',assetQuery:'?app=tabtab'});
 const json=x=>Response.json(x);
 const bad=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const cookie=v=>`__Host-opencam_session=${v}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${v?604800:0}`;
-export async function dashboardSettings(env){const s=await first(env,'SELECT * FROM dashboard_settings WHERE id=1');return {postal_address:s?.postal_address??env.POSTAL_ADDRESS??'',daily_limit:s?.daily_limit??Number(env.DAILY_SEND_LIMIT||0)};}
-export async function dashboardEnv(env){const s=await dashboardSettings(env);return {...env,POSTAL_ADDRESS:s.postal_address,DAILY_SEND_LIMIT:String(s.daily_limit)};}
+export async function dashboardSettings(env){const s=await first(env,'SELECT * FROM dashboard_settings WHERE id=1');return {postal_address:s?.postal_address??env.POSTAL_ADDRESS??''};}
+export async function dashboardEnv(env){const s=await dashboardSettings(env);return {...env,POSTAL_ADDRESS:s.postal_address};}
 function draft(d){if(typeof d?.subject!=='string'||d.subject.length>200||/[\r\n]/.test(d.subject)||typeof d.markdown!=='string'||d.markdown.length>12000||typeof d.preheader!=='string'||d.preheader.length>200)bad('Use a subject up to 200 characters and a message up to 12,000 characters.');return d;}
 const fingerprint=(d,s)=>hash(JSON.stringify([d.subject,d.markdown,d.preheader,s.postal_address]));
 async function identity(req,env){const v=(req.headers.get('cookie')||'').match(/(?:^|;\s*)__Host-opencam_session=([^;]+)/)?.[1];if(!v||v.length>128)return null;const d=hash(v);return (await first(env,'SELECT digest FROM dashboard_sessions WHERE digest=? AND expires_at>?',d,now()))?.digest;}
@@ -53,7 +54,7 @@ export async function dashboardAPI(req,env,{body,rate,admin,deps}){
  if(path==='/overview'&&req.method==='GET'){
   const campaigns=await all(env,`SELECT d.*,CASE WHEN d.campaign_id IS NULL THEN 'draft' WHEN c.paused=1 THEN 'paused' WHEN SUM(CASE WHEN e.kind='announcement' AND e.status IN ('queued','retry','sending') THEN 1 ELSE 0 END)>0 THEN 'sending' WHEN SUM(CASE WHEN e.kind='announcement' AND e.status IN ('failed','ambiguous') THEN 1 ELSE 0 END)>0 THEN 'needs_review' ELSE 'completed' END state,
   SUM(CASE WHEN e.kind='announcement' THEN 1 ELSE 0 END) total,SUM(CASE WHEN e.kind='announcement' AND e.status='sent' THEN 1 ELSE 0 END) sent,SUM(CASE WHEN e.kind='announcement' AND e.status IN ('queued','retry','sending') THEN 1 ELSE 0 END) remaining,SUM(CASE WHEN e.kind='announcement' AND e.status='skipped' THEN 1 ELSE 0 END) skipped,SUM(CASE WHEN e.kind='announcement' AND e.status IN ('failed','ambiguous') THEN 1 ELSE 0 END) errors FROM dashboard_drafts d LEFT JOIN campaigns c ON c.id=d.campaign_id LEFT JOIN deliveries e ON e.campaign_id=c.id GROUP BY d.id ORDER BY d.created_at DESC LIMIT 100`);
-  return json({email:env.DASHBOARD_EMAIL,settings:config,counts:await all(env,'SELECT status,count(*) total FROM subscribers GROUP BY status'),usage:(await first(env,'SELECT count(*) n FROM send_reservations WHERE created_at>?',now()-86400)).n,campaigns});
+  return json({email:env.DASHBOARD_EMAIL,settings:config,counts:await all(env,'SELECT status,count(*) total FROM subscribers GROUP BY status'),usage:await sentLastDay(env),campaigns});
  }
  if(path==='/contacts'&&req.method==='GET'){
   const q=(u.searchParams.get('q')||'').slice(0,254),status=u.searchParams.get('status')||'',page=Math.max(0,Math.min(10000,Number(u.searchParams.get('page'))||0));
@@ -62,7 +63,7 @@ export async function dashboardAPI(req,env,{body,rate,admin,deps}){
  }
  if(path==='/unsubscribe'&&req.method==='POST'){const d=await body(req);const s=await first(env,'SELECT email FROM subscribers WHERE id=?',String(d.id));if(!s)bad('Subscriber not found.',404);return call('/admin/subscriber',{email:s.email,action:'unsubscribe'});}
  if(path==='/settings'&&req.method==='POST'){
-  const d=await body(req);if(typeof d.postal_address!=='string'||!d.postal_address.trim()||d.postal_address.length>500||d.daily_limit!==0)bad('Enter a mailing address. OpenCam uses the Pro plan with no daily cap.');
+  const d=await body(req);if(typeof d.postal_address!=='string'||!d.postal_address.trim()||d.postal_address.length>500)bad('Enter a mailing address.');
   await run(env,'INSERT INTO dashboard_settings VALUES(1,?,0) ON CONFLICT(id) DO UPDATE SET postal_address=excluded.postal_address',d.postal_address.trim());return json({ok:true});
  }
  if(path==='/preview'&&req.method==='POST'){

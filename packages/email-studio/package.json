@@ -1,1 +1,1 @@
-{"name":"@riccqi/email-studio","version":"1.2.1","type":"module","exports":{"./ui":"./ui.js","./template":"./template.js"},"files":["ui.js","template.js"],"dependencies":{"marked":"^17.0.0"}}
+{"name":"@riccqi/email-studio","version":"1.3.0","type":"module","exports":{"./ui":"./ui.js","./template":"./template.js","./outbox":"./outbox.js"},"files":["ui.js","template.js","outbox.js"],"dependencies":{"marked":"^17.0.0"}}
