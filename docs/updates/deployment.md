@@ -34,7 +34,7 @@ SES/SNS/IAM setup is superseded; no AWS account is required for this system.
    `v=DMARC1; p=none;`. Do not replace a stronger existing policy.
 4. Leave Resend receiving, open tracking, and click tracking disabled.
 5. Create a sending-only key restricted to opencam.app. Install RESEND_API_KEY
-   as a Worker secret. From is OpenCam <updates@opencam.app>; Reply-To is
+   as a Worker secret. From is OpenCam <richard@opencam.app>; Reply-To is
    richard@opencam.app. Full-access account keys must not be installed in Worker.
 6. Register `https://updates-api.opencam.app/events/resend` with events
    email.sent, email.delivered, email.bounced, email.complained, email.suppressed,
@@ -46,7 +46,7 @@ SES/SNS/IAM setup is superseded; no AWS account is required for this system.
    complained@resend.dev and suppressed@resend.dev. Test mail counts toward quota.
    Webhook logs must show 2xx; bounce/complaint/suppression must update D1.
 8. Check shared account usage before raising DAILY_SEND_LIMIT. OpenCam starts at
-   1,000 attempts/day, at most one per minute; announcements remain gated off. The limit is
+   up to 100 emails per minute via the batch API, with DAILY_SEND_LIMIT=0 (no daily cap); announcements remain gated off. The limit is
    local to OpenCam; TabTab usage also consumes Resend's account quota. Pro permits
    50,000 emails/month and 10 domains for $20/month at the checked pricing; no paid
    upgrade or add-on is automatic. Keep overage billing off unless authorized.

@@ -14,11 +14,12 @@
     "SITE_ORIGIN": "https://opencam.app",
     "API_ORIGIN": "https://updates-api.opencam.app",
     "REPLY_TO": "richard@opencam.app",
+    "POSTAL_ADDRESS": "Richard Qi / OpenCam\n71 Toh Guan Road East\n#04-07 TCH Techcentre\nSingapore 608598",
     "TURNSTILE_HOSTNAME": "opencam.app",
     "SIGNUPS_ENABLED": "true",
     "SENDING_ENABLED": "true",
     "LIVE_SEND_ENABLED": "false",
-    "DAILY_SEND_LIMIT": "1000",
+    "DAILY_SEND_LIMIT": "0",
     "TEST_RECIPIENTS": "xiaochean@gmail.com,opencamapp@gmail.com,delivered@resend.dev,bounced@resend.dev,complained@resend.dev,suppressed@resend.dev"
   }
 }

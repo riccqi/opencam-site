@@ -40,7 +40,7 @@ uploads never send email.
    quota and remaining shared Resend account capacity, and review suppression and Resend webhook failures.
    Campaign content is immutable; a conflicting version is rejected, not overwritten.
    Correct a draft only using a reviewed database migration before any launch.
-5. Set POSTAL_ADDRESS to the owner-provided business address (currently blank).
+5. POSTAL_ADDRESS is configured with the owner-approved TabTab mailing address, labeled Richard Qi / OpenCam.
    After explicit live-send approval, enable LIVE_SEND_ENABLED and run:
 
    ```sh
@@ -48,16 +48,15 @@ uploads never send email.
    npm run admin -- status CAMPAIGN_ID
    ```
 
-   Repeating launch is safe. A durable snapshot of currently confirmed subscribers
+   Repeating launch is safe. A durable snapshot of currently eligible subscribed contacts
    is created once. Later signups do not enter that campaign. Cron drains the queue
-   at one message per minute, under the rolling daily ceiling. No browser needs to
+   at up to 100 messages per minute, with no configured daily cap. No browser needs to
    stay open. Check status until no queued/retry/sending entries remain.
 
 6. Review ambiguous/failed entries. Do not retry blindly. Signed Resend delivery/send
    events may resolve ambiguous acceptance. If provider evidence confirms acceptance:
    `npm run admin -- resolve DELIVERY_ID sent`. Otherwise leave held or resolve to
-   skipped. This version has no bulk resend command. Confirmations can be requested
-   afresh by their owner; do not mass-reconfirm legacy contacts.
+   skipped. This version has no bulk resend command. Signup never sends confirmation emails.
 
 Administration:
 
@@ -98,8 +97,7 @@ npm run admin -- launch CAMPAIGN_ID --update-key community-news-october-2026
 ```
 
 The key uniquely identifies immutable content; reusing it cannot create duplicate
-campaigns. General updates need no public App Store version or store link. Only
-confirmed subscribers with broader v2 consent or explicitly reviewed legacy form
-consent are eligible; older release-only
+campaigns. General updates need no public App Store version or store link. New single-opt-in subscribers, confirmed broader-v2 subscribers, and reviewed legacy form
+contacts are eligible; older release-only
 consent is excluded at launch and checked again before sending. No existing consent
 is upgraded automatically. Existing release JSON and `--public-version` remain valid.

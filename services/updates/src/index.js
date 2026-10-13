@@ -79,7 +79,7 @@ async function events(req,env) {
   const {id:eventId,event:e}=verified;
   // A shared Resend account emits events for both apps. Only this sender belongs here.
   const from=String(e.data?.from||'').trim().toLowerCase();
-  if(from!=='updates@opencam.app' && !/^opencam\s*<updates@opencam\.app>$/.test(from))return json({ok:true,ignored:true});
+  if(!/^(?:(?:updates|richard)@opencam\.app|opencam\s*<(?:updates|richard)@opencam\.app>)$/.test(from))return json({ok:true,ignored:true});
   if(await first(env,'SELECT id FROM events WHERE id=?',eventId))return json({ok:true});
   const type=e.type;
   const statements=[stmt(env,'INSERT OR IGNORE INTO events VALUES(?,?,?)',eventId,now(),['email.bounced','email.complained','email.suppressed','email.delivered','email.sent','email.failed'].includes(type)?type:'Other')];

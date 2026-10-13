@@ -6,7 +6,7 @@ import {createHmac} from 'node:crypto';
 import {createWorker} from '../src/index.js';
 import {drain} from '../src/queue.js';
 import {hash,now,decrypt,encrypt,token,unsubscribeToken,email} from '../src/security.js';
-import {sendResend,announcement,confirmation} from '../src/mail.js';
+import {sendResend,sendResendBatch,announcement,confirmation} from '../src/mail.js';
 function setup() {
  const db=new DatabaseSync(':memory:');db.exec(['0001_initial.sql','0002_general_updates.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n'));
  const DB={prepare(sql){return {bind(...args){return {async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}};},async first(){return db.prepare(sql).get(...args)||null;},async all(){return {results:db.prepare(sql).all(...args)};}};} };},async batch(statements){db.exec('BEGIN');try{const result=[];for(const s of statements)result.push(await s.run());db.exec('COMMIT');return result;}catch(e){db.exec('ROLLBACK');throw e;}}};
@@ -97,7 +97,7 @@ test('interrupted sending becomes ambiguous without automatic resend',async()=>{
  await drain(x.env,{send:async()=>{sends++;return {status:'sent'};}});assert.equal(sends,0);assert.equal(x.row('SELECT status FROM deliveries').status,'ambiguous');
 });
 function event(env,type='email.bounced',data={}) {
- const payload={type,data:{from:'OpenCam <updates@opencam.app>',to:['person@example.com'],...data}};
+ const payload={type,data:{from:'OpenCam <richard@opencam.app>',to:['person@example.com'],...data}};
  const raw=JSON.stringify(payload),id='event-'+type,timestamp=String(now());
  const signature=createHmac('sha256',Buffer.from(env.RESEND_WEBHOOK_SECRET.slice(6),'base64')).update(`${id}.${timestamp}.${raw}`).digest('base64');
  return {payload,extra:{headers:{'content-type':'application/json','svix-id':id,'svix-timestamp':timestamp,'svix-signature':`v1,${signature}`},body:raw}};
@@ -118,7 +118,7 @@ test('forged signature, stale timestamp, and modified raw body are rejected',asy
  assert.equal(x.row('SELECT status FROM subscribers').status,'subscribed');
 });
 test('shared-account TabTab events cannot modify OpenCam contacts',async()=>{
- const x=setup();await x.signup();const m=event(x.env,'email.bounced',{from:'TabTab <updates@tabtabapp.net>'});
+ const x=setup();await x.signup();const m=event(x.env,'email.bounced',{from:'TabTab <richard@tabtabapp.net>'});
  assert.equal((await x.req('/events/resend',m.payload,m.extra)).status,200);assert.equal(x.row('SELECT status FROM subscribers').status,'subscribed');assert.equal(x.row('SELECT count(*) n FROM events').n,0);
 });
 test('signed Resend event reconciles ambiguous acceptance with delivery tag',async()=>{
@@ -178,4 +178,57 @@ test('reviewed legacy form consent is sendable without inventing mailbox confirm
  await drain(x.env,{send:async()=>{sent++;return {status:'sent',messageId:'legacy-test'};}});assert.equal(sent,1);
  assert.equal(x.row('SELECT confirmed_at FROM subscribers').confirmed_at,null);
  const y=setup();await y.signup();y.db.exec("UPDATE subscribers SET confirmed_at=NULL,consent_version='legacy-form-updates-owner-reviewed-2026-10-13',consent_evidence=NULL");const id=await y.campaign();await y.req(`/admin/campaigns/${id}/launch`,{confirm_version:'2.1.0'});assert.equal(y.row("SELECT count(*) n FROM deliveries WHERE kind='announcement'").n,0);
+});
+
+async function seededCampaign(n) {
+ const x=setup();x.env.DAILY_SEND_LIMIT='0';
+ const insert=x.db.prepare("INSERT INTO subscribers(id,email,status,source,signup_at,consent_version,unsubscribe_hash,last_confirmation_at,consent_evidence) VALUES(?,?,'subscribed','website',?,'opencam-updates-single-opt-in-v3',?,0,'{\"method\":\"website_single_opt_in\"}')");
+ for(let i=0;i<n;i++)insert.run(`sub-${i}`,`person${i}@example.com`,now(),hash(`unsub-${i}`));
+ const c=await(await x.req('/admin/campaigns',{kind:'update',key:'batch-test',subject:'News',notes:'Hello'})).json();
+ await x.req(`/admin/campaigns/${c.id}/launch`,{confirm_key:'batch-test'});return x;
+}
+test('1725-person campaign completes in 18 batches with overlap protection and no daily cutoff',async()=>{
+ const x=await seededCampaign(1725),seen=new Set(),sizes=[];
+ const deps={sendBatch:async(env,items)=>{
+  sizes.push(items.length);assert.ok(items.length<=100);
+  return sendResendBatch(env,items,async(url,init)=>{
+   assert.equal(url,'https://api.resend.com/emails/batch');const body=JSON.parse(init.body);
+   for(const item of body){const id=item.tags.find(t=>t.name==='delivery_id').value;assert.ok(!seen.has(id));seen.add(id);assert.equal(item.to.length,1);assert.match(item.headers['List-Unsubscribe'],/unsubscribe/);assert.match(item.text,/Test postal address/);}
+   return Response.json({data:body.map(item=>({id:'provider-'+item.tags[1].value}))});
+  });
+ }};
+ for(let i=0;i<18;i++){x.unlock();await Promise.all([drain(x.env,deps),drain(x.env,deps)]);}
+ assert.deepEqual(sizes,[...Array(17).fill(100),25]);assert.equal(seen.size,1725);
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='sent'").n,1725);
+ x.unlock();await drain(x.env,deps);assert.equal(sizes.length,18);
+});
+test('batch eligibility, disabled campaign gate, and optional daily cap are preserved',async()=>{
+ const x=await seededCampaign(5);x.env.LIVE_SEND_ENABLED='false';
+ await drain(x.env,{sendBatch:async()=>{throw Error('Disabled campaign');}});
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='queued'").n,5);
+ x.env.LIVE_SEND_ENABLED='true';x.env.DAILY_SEND_LIMIT='2';
+ x.db.exec("UPDATE subscribers SET status='unsubscribed' WHERE id='sub-0'; UPDATE subscribers SET status='suppressed' WHERE id='sub-1'");
+ const sent=[];const deps={sendBatch:async(_env,items)=>{sent.push(...items.map(i=>i.recipient));return items.map(i=>({status:'sent',messageId:i.id}));}};
+ for(let i=0;i<5;i++){x.unlock();await drain(x.env,deps);}
+ assert.equal(sent.length,2);assert.ok(!sent.includes('person0@example.com'));assert.ok(!sent.includes('person1@example.com'));
+ assert.equal(x.row("SELECT count(*) n FROM deliveries d JOIN subscribers s ON s.id=d.subscriber_id WHERE d.status='queued' AND s.status='subscribed'").n,1);
+});
+test('batch provider handles throttle, uncertainty, malformed responses and ordered IDs',async()=>{
+ const x=setup(),items=[0,1].map(i=>({id:`id-${i}`,recipient:`p${i}@example.com`,message:{subject:'Hi',text:'Hello',html:'Hello'}}));
+ let key;
+ const fetcher=async(_url,init)=>{if(key)assert.equal(init.headers['Idempotency-Key'],key);key=init.headers['Idempotency-Key'];return Response.json({data:[{id:'a'},{id:'b'}]});};
+ assert.deepEqual((await sendResendBatch(x.env,items,fetcher)).map(r=>r.messageId),['a','b']);await sendResendBatch(x.env,items,fetcher);
+ for(const [status,expected] of [[429,'retry'],[500,'ambiguous'],[409,'ambiguous'],[422,'failed']])assert.ok((await sendResendBatch(x.env,items,async()=>new Response('',{status}))).every(r=>r.status===expected));
+ for(const data of [[{id:'a'}],[{id:'a'},{id:'a'}],[{id:'a'},{}]])assert.ok((await sendResendBatch(x.env,items,async()=>Response.json({data}))).every(r=>r.status==='ambiguous'));
+ assert.ok((await sendResendBatch(x.env,items,async()=>{throw Error('timeout');})).every(r=>r.status==='ambiguous'));
+});
+test('whole-batch throttling retries later and uncertain acceptance never auto-resends',async()=>{
+ const x=await seededCampaign(4);
+ await drain(x.env,{sendBatch:async(_env,items)=>items.map(()=>({status:'retry',code:'throttled'}))});
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='retry' AND available_at>0").n,4);
+ x.unlock();await drain(x.env,{sendBatch:async()=>{throw Error('Backoff must hold');}});
+ x.db.exec('UPDATE deliveries SET available_at=0');x.unlock();
+ await drain(x.env,{sendBatch:async(_env,items)=>items.map(()=>({status:'ambiguous',code:'transport_uncertain'}))});
+ x.unlock();await drain(x.env,{sendBatch:async()=>{throw Error('Uncertain batch must stay held');}});
+ assert.equal(x.row("SELECT count(*) n FROM deliveries WHERE status='ambiguous'").n,4);
 });

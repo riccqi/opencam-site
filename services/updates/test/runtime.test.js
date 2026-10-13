@@ -30,3 +30,26 @@ test('real workerd + D1: immediate signup without email, one-click unsubscribe, 
  assert.equal(r.status,200,await r.text());assert.equal((await db.prepare('SELECT status FROM subscribers').first()).status,'suppressed');
  }finally{await mf.dispose();}
 });
+
+test('real workerd + D1 drains 100 recipients through one mocked Resend batch request',async()=>{
+ let calls=0;
+ const root=fileURLToPath(new URL('../src/',import.meta.url));
+ const mf=new Miniflare(convertV4MiniflareOptions({modules:[{type:'ESModule',path:root+'batch-test.js',contents:"import {drain} from './queue.js'; export default {async fetch(req,env){await drain(env);return new Response('ok')}};"},...['security.js','db.js','queue.js','mail.js'].map(name=>({type:'ESModule',path:root+name,contents:readFileSync(new URL('../src/'+name,import.meta.url),'utf8')}))],modulesRoot:root,compatibilityDate:'2026-10-01',compatibilityFlags:['nodejs_compat'],d1Databases:['DB'],bindings:{SENDING_ENABLED:'true',LIVE_SEND_ENABLED:'true',DAILY_SEND_LIMIT:'0',POSTAL_ADDRESS:'Test address',TOKEN_KEY:'ab'.repeat(32),API_ORIGIN:'https://updates-api.opencam.app',REPLY_TO:'richard@opencam.app',RESEND_API_KEY:'fake'},outboundService:async req=>{
+  assert.equal(req.url,'https://api.resend.com/emails/batch');calls++;
+  const data=await req.json();assert.equal(data.length,100);assert.equal(new Set(data.map(d=>d.to[0])).size,100);
+  return Response.json({data:data.map((_,i)=>({id:'mock-'+i}))});
+ }}));
+ try {
+  const db=await mf.getD1Database('DB');
+  const sql=['0001_initial.sql','0002_general_updates.sql'].map(name=>readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8')).join('\n');
+  for(const statement of sql.split(';').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
+  await db.prepare("INSERT INTO campaigns(id,version,subject,notes,app_store_url,created_at,launched_at,campaign_type) VALUES('c','update:runtime','News','Hello','',1,1,'update')").run();
+  for(let i=0;i<100;i++)await db.batch([
+   db.prepare("INSERT INTO subscribers(id,email,status,source,signup_at,consent_version,unsubscribe_hash,last_confirmation_at,consent_evidence) VALUES(?,?,'subscribed','website',1,'opencam-updates-single-opt-in-v3',?,0,'{}')").bind('s'+i,`p${i}@example.com`,'h'+i),
+   db.prepare("INSERT INTO deliveries(id,campaign_id,subscriber_id,kind,available_at) VALUES(?,'c',?,'announcement',0)").bind('d'+i,'s'+i)
+  ]);
+  assert.equal((await mf.dispatchFetch('https://local.test/')).status,200);
+  assert.equal((await db.prepare("SELECT count(*) n FROM deliveries WHERE status='sent'").first()).n,100);
+  await mf.dispatchFetch('https://local.test/');assert.equal(calls,1);
+ }finally{await mf.dispose();}
+});

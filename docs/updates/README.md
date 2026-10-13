@@ -78,19 +78,19 @@ secret/sitekey. Production signups are enabled; no confirmation email is sent; l
 
 ## Delivery semantics
 
-The durable outbox sends **at most one message per minute globally**, including
-test announcements, with a configurable rolling 24-hour attempt budget (1,000 in production). Failed/skipped reservations are counted conservatively. Set the budget
-below the shared Resend account quota, reserving capacity for TabTab. This limit
-is local to OpenCam, not an account-wide quota coordinator.
-The one-per-minute rate is intentionally conservative: 1,725 messages take at
-least 28.75 hours after quota approval, and longer under a daily cap. It is not a
-bulk-marketing throughput service. Old queued confirmations are skipped without sending.
+The durable outbox submits up to **100 individually addressed messages per minute**
+using one Resend batch API request. The production daily cap is disabled
+(`DAILY_SEND_LIMIT=0`); a positive value optionally restores a rolling 24-hour cap.
+The 1,725-person starting list takes 18 cron runs, roughly 18 minutes in normal
+conditions, with additional time for retries or provider delays. Resend acceptance
+does not guarantee immediate inbox delivery. Check remaining shared monthly quota
+before launch. Old queued confirmation messages are skipped without sending.
 
 An atomic `queued/retry -> sending` claim prevents simultaneous workers sending
 the same entry. `sent` means Resend accepted the message, not that it reached the
 inbox. A network error, timeout, HTTP 5xx, missing acceptance ID, or stale sending
 claim becomes `ambiguous`, **never automatically retried**. This favors avoiding
-duplicates over guaranteed delivery. Each delivery uses a stable Resend idempotency key (provider window: 24 hours); exactly-once
+duplicates over guaranteed delivery. Each batch uses a stable hash of the exact ordered payload as its Resend idempotency key (provider window: 24 hours); exactly-once
 delivery is not claimed. Only explicit HTTP 429 rejection retries, at exponential
 intervals capped at one hour and five attempts. Other 4xx responses are terminal.
 
@@ -117,7 +117,7 @@ The source parameter is attribution, never proof of consent. Until cutover these
 URLs show the preserved Google Form fallback. No iOS repository was modified.
 
 Webhook signatures cover the exact raw body and timestamp, with a five-minute
-replay tolerance and event-ID deduplication. Only updates@opencam.app events
+replay tolerance and event-ID deduplication. Only richard@opencam.app and legacy updates@opencam.app events
 affect this database. Subscription consent stays separate between apps. Resend
 may also enforce account-level bounce/complaint suppression across both senders.
 

@@ -1,6 +1,6 @@
-import { now, decrypt, unsubscribeToken, hash, token } from './security.js';
-import { run, first, stmt } from './db.js';
-import { sendResend, announcement } from './mail.js';
+import { now, decrypt, unsubscribeToken, token } from './security.js';
+import { run, first, all, stmt } from './db.js';
+import { sendResendBatch, announcement } from './mail.js';
 export async function drain(env, deps = {}) {
   const t = now();
   // No automatic retry after a crash in the send/record gap.
@@ -11,18 +11,46 @@ export async function drain(env, deps = {}) {
   await run(env, "UPDATE deliveries SET payload=NULL WHERE finished_at < ?", t-86400);
   await run(env, "DELETE FROM subscribers WHERE status='pending' AND last_confirmation_at < ?", t-30*86400);
   if (env.SENDING_ENABLED !== 'true') return;
-  // One global send slot per minute, with a rolling 24-hour ceiling. Includes confirmations/tests.
-  const reserved = await first(env, `UPDATE send_lock SET next_at=? WHERE id=1 AND next_at<=?
-    AND (SELECT count(*) FROM send_reservations WHERE created_at>?) < ? RETURNING id`, t+60,t,t-86400,Math.max(0,Number(env.DAILY_SEND_LIMIT)||0));
+  // One atomic batch claim per minute across overlapping cron invocations.
+  const reserved = await first(env,'UPDATE send_lock SET next_at=? WHERE id=1 AND next_at<=? RETURNING id',t+60,t);
   if (!reserved) return;
-  const d = await first(env, `UPDATE deliveries SET status='sending',started_at=?,attempts=attempts+1 WHERE id=(
+  const cap=Number(env.DAILY_SEND_LIMIT ?? 0);
+  if (!Number.isSafeInteger(cap) || cap<0) throw new Error('Invalid daily send limit');
+  const used=cap ? (await first(env,'SELECT count(*) n FROM send_reservations WHERE created_at>?',t-86400)).n : 0;
+  const limit=cap ? Math.max(0,Math.min(100,cap-used)) : 100;
+  if (!limit) return;
+  const deliveries=await all(env,`UPDATE deliveries SET status='sending',started_at=?,attempts=attempts+1 WHERE id IN (
     SELECT id FROM deliveries WHERE status IN ('queued','retry') AND available_at<=?
-    AND (kind!='announcement' OR ?='true') ORDER BY CASE kind WHEN 'confirmation' THEN 0 ELSE 1 END,available_at,id LIMIT 1
-    ) AND status IN ('queued','retry') RETURNING *`,t,t,env.LIVE_SEND_ENABLED);
-  if (!d) return;
-  await run(env,'INSERT INTO send_reservations VALUES(?,?)',token(),t);
+    AND (kind!='announcement' OR ?='true') ORDER BY available_at,id LIMIT ?
+    ) AND status IN ('queued','retry') RETURNING *`,t,t,env.LIVE_SEND_ENABLED,limit);
+  const prepared=[];
+  for(const d of deliveries) {
+    const item=await prepare(env,d,t);
+    if(item) prepared.push({...item,id:d.id,delivery:d});
+  }
+  // Recheck every recipient after preparation, immediately before provider handoff.
+  const ready=[];
+  for(const item of prepared) {
+    const current=await first(env,'SELECT status FROM subscribers WHERE email=?',item.recipient);
+    if(current?.status==='suppressed'||(item.delivery.kind==='announcement'&&current?.status!=='subscribed')) {
+      await run(env,"UPDATE deliveries SET status='skipped',error_code='recipient_ineligible',finished_at=?,payload=NULL WHERE id=? AND status='sending'",now(),item.id);
+    } else ready.push(item);
+  }
+  if(!ready.length)return;
+  ready.sort((a,b)=>a.id.localeCompare(b.id));
+  await env.DB.batch(ready.map(()=>stmt(env,'INSERT INTO send_reservations VALUES(?,?)',token(),now())));
+  const results=deps.send ? await Promise.all(ready.map(i=>deps.send(env,i.recipient,i.message,i.id)))
+    : await (deps.sendBatch || sendResendBatch)(env,ready);
+  await env.DB.batch(ready.map((item,i)=>{
+    const d=item.delivery,result=results[i]||{status:'ambiguous',code:'missing_batch_result'};
+    const status=result.status==='retry'&&d.attempts>=5?'failed':result.status;
+    return stmt(env,`UPDATE deliveries SET status=?,message_id=?,error_code=?,available_at=?,finished_at=?,payload=CASE WHEN ?='retry' THEN payload ELSE NULL END WHERE id=? AND status='sending'`,
+      status,result.messageId||null,result.code||null,now()+Math.min(3600,60*2**d.attempts),status==='retry'?null:now(),status,d.id);
+  }));
+}
+async function prepare(env,d,t) {
   let recipient, message;
-  const skip = code => run(env,"UPDATE deliveries SET status='skipped',error_code=?,finished_at=?,payload=NULL WHERE id=? AND status='sending'",code,t,d.id);
+  const skip = async code => { await run(env,"UPDATE deliveries SET status='skipped',error_code=?,finished_at=?,payload=NULL WHERE id=? AND status='sending'",code,t,d.id); return null; };
   if (d.kind === 'announcement') {
     if(!env.POSTAL_ADDRESS?.trim())return skip('postal_address_missing');
     const s = await first(env,'SELECT * FROM subscribers WHERE id=?',d.subscriber_id);
@@ -34,17 +62,10 @@ export async function drain(env, deps = {}) {
     if(c.campaign_type==='update' && s.consent_version!=='opencam-updates-2026-10-13-v2' && !explicitOptIn)return skip('consent_scope');
     recipient=s.email; message=announcement(c,`${env.API_ORIGIN}/unsubscribe?token=${unsubscribeToken(env,s.id)}`,env.POSTAL_ADDRESS);
   } else {
+    if (d.kind === 'confirmation') return skip('confirmation_disabled');
     const payload=decrypt(env,d.payload);
     recipient=payload.recipient; message=payload.message;
-    if (d.kind === 'confirmation') return skip('confirmation_disabled');
-
   }
-  // Last DB read before provider invocation; a provider handoff already in progress cannot be recalled.
-  const current=await first(env,'SELECT status FROM subscribers WHERE email=?',recipient);
-  if (current?.status === 'suppressed' || (d.kind==='announcement' && current?.status!=='subscribed')) return skip('recipient_ineligible');
   if (d.kind==='test' && !(env.TEST_RECIPIENTS||'').split(',').map(s=>s.trim().toLowerCase()).includes(recipient)) return skip('test_not_allowed');
-  const result=await (deps.send || sendResend)(env,recipient,message,d.id);
-  const status=result.status==='retry' && d.attempts>=5 ? 'failed' : result.status;
-  await run(env,`UPDATE deliveries SET status=?,message_id=?,error_code=?,available_at=?,finished_at=?,payload=CASE WHEN ?='retry' THEN payload ELSE NULL END WHERE id=? AND status='sending'`,
-    status,result.messageId||null,result.code||null,t+Math.min(3600,60*2**d.attempts),status==='retry'?null:now(),status,d.id);
+  return {recipient,message};
 }
