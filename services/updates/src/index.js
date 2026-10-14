@@ -6,7 +6,7 @@ import { announcement } from './mail.js';
 import { drain } from './queue.js';
 import { reconcileStatement } from '@riccqi/email-studio/outbox';
 const CONSENT='opencam-updates-single-opt-in-v3';
-const generic={message:'Thanks for subscribing to OpenCam updates. You can unsubscribe anytime.'};
+const generic={message:"You're on the list!"};
 class HttpError extends Error { constructor(status,message) { super(message);this.status=status; } }
 const fail=(status,message)=>{throw new HttpError(status,message);};
 const json=(data,status=200)=>Response.json(data,{status});
