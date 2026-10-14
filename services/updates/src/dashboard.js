@@ -59,7 +59,7 @@ export async function dashboardAPI(req,env,{body,rate,admin,deps}){
  if(path==='/contacts'&&req.method==='GET'){
   const q=(u.searchParams.get('q')||'').slice(0,254),status=u.searchParams.get('status')||'',page=Math.max(0,Math.min(10000,Number(u.searchParams.get('page'))||0));
   const where="WHERE (?='' OR status=?) AND instr(email,lower(?))>0",args=[status,status,q];
-  return json({total:(await first(env,'SELECT count(*) n FROM subscribers '+where,...args)).n,page,contacts:await all(env,'SELECT id,email,status,source sources,signup_at consent_at FROM subscribers '+where+' ORDER BY signup_at DESC,id LIMIT 50 OFFSET ?',...args,page*50)});
+  return json({total:(await first(env,'SELECT count(*) n FROM subscribers '+where,...args)).n,page,contacts:await all(env,"SELECT id,email,status,source sources,source added_via,strftime('%Y-%m-%dT%H:%M:%SZ',signup_at,'unixepoch') added_at,strftime('%Y-%m-%dT%H:%M:%SZ',unsubscribed_at,'unixepoch') unsubscribed_at,signup_at consent_at FROM subscribers "+where+' ORDER BY signup_at DESC,id LIMIT 50 OFFSET ?',...args,page*50)});
  }
  if(path==='/unsubscribe'&&req.method==='POST'){const d=await body(req);const s=await first(env,'SELECT email FROM subscribers WHERE id=?',String(d.id));if(!s)bad('Subscriber not found.',404);return call('/admin/subscriber',{email:s.email,action:'unsubscribe'});}
  if(path==='/settings'&&req.method==='POST'){

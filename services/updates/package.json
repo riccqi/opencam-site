@@ -18,6 +18,6 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "@riccqi/email-studio": "file:../../packages/releases/riccqi-email-studio-1.3.0.tgz"
+    "@riccqi/email-studio": "file:../../packages/releases/riccqi-email-studio-1.4.0.tgz"
   }
 }

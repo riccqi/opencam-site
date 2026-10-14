@@ -291,3 +291,12 @@ test('shared studio serves workspace-specific assets with one auth endpoint',asy
  const js=await(await x.req('/dashboard/app.js?app=tabtab')).text();new Function(js);assert.match(js,/X-OpenCam-Dashboard/);assert.match(js,/"\/dashboard\/api\/tabtab"/);assert.match(js,/"\/dashboard\/api"/);
  assert.doesNotMatch(html,/server-only-token/);
 });
+
+test('subscriber list shows when and how each contact was added, and when they unsubscribed',async()=>{
+ const x=setup(),api=dashboardClient(x);await x.signup('new@example.com');
+ const listed=async status=>(await(await api('/contacts?q=new&status='+status)).json()).contacts[0];
+ const added=await listed('subscribed');assert.equal(added.added_via,'app');assert.match(added.added_at,/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);assert.equal(added.unsubscribed_at,null);
+ await api('/unsubscribe',{id:added.id});
+ const gone=await listed('unsubscribed');assert.equal(gone.status,'unsubscribed');assert.match(gone.unsubscribed_at,/^\d{4}-\d\d-\d\dT/);assert.equal(gone.added_at,added.added_at);
+ assert.equal((await(await api('/contacts?q=new&status=subscribed')).json()).total,0);
+});
