@@ -1,0 +1,34 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# Release email secrets, local D1, and personal migration/export data
+.env.*
+!.env.example
+.dev.vars*
+!.dev.vars.example
+.wrangler/
+private/
+*.private.csv
+*.private.json
+
+*.private.sql
+
+__pycache__/

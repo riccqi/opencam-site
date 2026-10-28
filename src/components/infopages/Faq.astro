@@ -1,0 +1,212 @@
+<section aria-labelledby="faq-section" id="faq">  
+  <div
+    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-24 scroll-mt-12"
+  >
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12">
+      <div class="text-center lg:text-left">
+        <div>
+          <p
+            class="text-3xl font-medium tracking-tight sm:text-4xl text-white"
+          >
+            Frequently asked questions
+          </p>
+          <p class="text-base mt-4 text-slate-300">
+            Answers to commonly asked questions about OpenCam
+          </p>
+        </div>
+      </div>
+      <div
+        x-data="{
+  activeAccordion: '',
+  setActiveAccordion(id) {
+  this.activeAccordion = (this.activeAccordion == id) ? '' : id
+  }
+  }"
+        class="relative w-full mx-auto font-normal lg:col-span-2"
+      >
+        <!-- <div
+          x-data="{ id: $id('accordion') }"
+          :class="{ 'text-black': activeAccordion==id, 'text-zinc-600 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-black"
+        >
+          <button
+            type="button"
+            @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
+            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
+          >
+            <span>How does OpenCam work?</span>
+            <svg
+              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
+              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
+              :class="{ '-rotate-[45deg]': activeAccordion==id }"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v12m6-6H6"></path></svg
+            >
+          </button>
+          <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
+            x-show="activeAccordion==id"
+            x-collapse=""
+          >
+            <div class="p-4 pt-2 text-slate-300">
+                OpenCam is a fully native iOS app built with UIKit and SwiftUI. It uses Apple's Vision framework to control your iPhone
+                and see details about which lenses you're using. 
+                <br>
+                <br>
+                OpenCam is currently in beta, and will be available on the App Store soon.
+            </div>
+          </div>
+        </div> -->
+        <div
+          x-data="{ id: $id('accordion') }"
+          :class="{ 'text-white': activeAccordion==id, 'text-slate-300 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-slate-300 hover:text-accent-500"
+        >
+          <button
+            type="button"
+            @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
+            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
+          >
+            <span>Why record Open Gate with OpenCam?</span>
+            <svg
+              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
+              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
+              :class="{ '-rotate-[45deg]': activeAccordion==id }"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v12m6-6H6"></path></svg
+            >
+          </button>
+          <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
+            x-show="activeAccordion==id"
+            x-collapse=""
+          >
+            <div class="p-4 pt-2 text-slate-300">
+              OpenCam records in a true 4:3 aspect ratio using your iPhone’s full sensor — capturing more of the scene without cropping or distortion.
+              <br>
+On iPhone 17 and iPhone Air, experience the new 1:1 full-sensor square mode, perfect for creators who shoot for both portrait and landscape formats.
+<br>
+With Apple Log and Open Gate recording, you’ll preserve every stop of dynamic range for precise color grading, complete with real-time LUT previews to see your look as you film.
+              <br>
+              <br>
+              You can now just film a single video, and have more room to edit it for both vertical and horizontal formats, for platforms like YouTube, TikTok, Instagram, and more.
+            </div>
+          </div>
+        </div>
+        <!-- <div
+          x-data="{ id: $id('accordion') }"
+          :class="{ 'text-white': activeAccordion==id, 'text-slate-300 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-slate-300 hover:text-accent-500"
+        >
+          <button
+            type="button"
+            @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
+            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
+          >
+            <span
+              >Is a subscription required?</span
+            >
+            <svg
+              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
+              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
+              :class="{ '-rotate-[45deg]': activeAccordion==id }"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v12m6-6H6"></path></svg
+            >
+          </button>
+          <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
+            x-show="activeAccordion==id"
+            x-collapse=""
+            style="display: none;"
+          >
+            <div class="p-4 pt-2 text-slate-300">
+              No. TabTab is a one-time purchase. There will be free future updates.
+            </div>
+          </div>
+        </div> -->
+
+        <div
+          x-data="{ id: $id('accordion') }"
+          :class="{ 'text-white': activeAccordion==id, 'text-slate-300 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-slate-300 hover:text-accent-500"
+        >
+          <button
+            type="button"
+            @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
+            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
+          >
+            <span
+              >How is my data handled?</span
+            >
+            <svg
+              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
+              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
+              :class="{ '-rotate-[45deg]': activeAccordion==id }"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v12m6-6H6"></path></svg
+            >
+          </button>
+          <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
+            x-show="activeAccordion==id"
+            x-collapse=""
+            style="display: none;"
+          >
+            <div class="p-4 pt-2 text-slate-300">
+              OpenCam’s camera functionality processes recordings locally on your iPhone and works offline. If you separately sign up for optional update emails, we collect your email address and subscription records as described in our privacy policy.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

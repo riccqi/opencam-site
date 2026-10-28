@@ -1,0 +1,80 @@
+---
+import { Image } from "astro:assets";
+import hero from "../../../public/hero.png";
+---
+<section>
+  <div
+    class="mx-auto w-full lg:px-24 max-w-7xl md:px-8 items-center px-8 pb-8">
+    <div class="text-center max-w-4xl mx-auto mt-12">
+      <h1
+        style="font-family: Inter, sans-serif"
+        class="text-5xl tracking-tight font-bold text-zinc-100 md:text-6xl">
+        Open Gate Recording <br>
+        <span class="flex items-center justify-center gap-4">
+          on 
+          <span class="flex items-center gap-1">
+            <img 
+              src="/symbols/apple.logo.svg" 
+              alt="Apple" 
+              class="h-[1em] w-auto inline-block text-zinc-100"
+              style="transform: translateY(-4px);"
+            />
+            iPhone
+          </span>
+        </span>
+      </h1>
+
+      <!-- Star Rating -->
+     
+      <p class="text-zinc-300 md:text-xl max-w-2xl mt-4 mx-auto text-base">
+        Use your iPhone's full camera sensor to capture wider, more expansive footage with an IMAX-like feel.
+      </p>
+
+      <div class="flex flex-col items-center mt-6">
+        <!-- Large 4.5/5 Rating -->
+        <div class="flex items-center justify-center mb-2">
+          <div
+            class="w-12 h-12 md:w-16 md:h-16 flex-shrink-0"
+            style="background: linear-gradient(135deg, #FFD700 10%, #ffbb3e 20%); -webkit-mask-image: url(/laurel.leading.svg); mask-image: url(/laurel.leading.svg); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;"
+            aria-label="Laurel decoration"
+          ></div>
+          <div class="text-center">
+            <p class="text-lg md:text-2xl font-extrabold text-white">4.5 <span class="text-sm font-bold text-zinc-300">/ 5</span></p>
+            <p class="text-gray-300 text-xs font-medium mt-1 leading-none">Used by 15k+ creators<br>around the world</p>
+          </div>
+          <div
+            class="w-12 h-12 md:w-16 md:h-16 flex-shrink-0"
+            style="background: linear-gradient(135deg, #FFD700 10%, #ffbb3e 20%); -webkit-mask-image: url(/laurel.trailing.svg); mask-image: url(/laurel.trailing.svg); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;"
+            aria-label="Laurel decoration"
+          ></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col items-center mt-10">
+      <div class="flex justify-center gap-2">
+        <a
+          href="https://apps.apple.com/us/app/opencam-open-gate-camera/id6743316690"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-block rounded-lg transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]"
+        >
+          <img
+            src="/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg"
+            alt="Download on the App Store"
+            class="h-12 md:h-16 w-auto"
+          />
+        </a>
+      </div>
+      <p class="text-zinc-400 text-sm mt-2 text-center">
+        Supports iOS 17+, iPhone 12 and newer.
+      </p>
+    </div>
+
+
+    <div class="relative max-w-3xl mx-auto items-center py-12 pb-12">
+      <div class="rounded-xl">
+        <Image src={hero} alt="OpenCam camera interface for Open Gate video recording on iPhone" widths={[384, 768, 1536]} sizes="(max-width: 832px) calc(100vw - 64px), 768px" format="webp" loading="eager" fetchpriority="high" class="w-full h-auto max-w-3xl object-contain mx-auto" />
+      </div>
+    </div>
+  </div>
+</section>

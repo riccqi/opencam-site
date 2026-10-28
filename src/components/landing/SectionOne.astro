@@ -1,0 +1,341 @@
+---
+import VideoPreview from "../VideoPreview.astro";
+---
+<section id="features">
+  <div
+    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-12 scroll-mt-12"
+  >
+    <!-- YouTube Feature Section (moved above features) -->
+    <div class="mx-auto max-w-xl text-center">
+      <p
+        class="text-4xl tracking-tight font-medium text-white md:text-5xl font-display"
+      >
+      Featured by creators
+      </p>
+      <p class="mt-4 text-lg text-slate-300">
+        Interested in featuring OpenCam? 
+        <a href="/press/" class="bg-orange-500 hover:bg-orange-400 text-white px-3 py-1 rounded-full transition-colors">Visit our press page</a> for media assets and contact information.
+      </p>
+    </div>
+
+    <div class="mt-8">
+      <div
+        class="relative left-1/2 w-screen max-w-none -translate-x-1/2"
+        role="presentation"
+        data-video-carousel-root
+      >
+        <div
+          class="flex flex-nowrap gap-6 md:gap-8 overflow-x-auto px-8 md:px-12 lg:px-24 pb-4 sm:pb-6 scrollbar-hidden snap-x snap-mandatory"
+          aria-label="Featured videos"
+          data-video-scroller
+        >
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
+            <VideoPreview videoId="-q8B4AKs9ag" title="OpenCam review by EpicTutorials" />
+          </div>
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
+            <VideoPreview videoId="RPdtKJ_UGy4" title="OpenCam featured by Tyler Stalman" />
+          </div>
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
+            <VideoPreview videoId="9kRGHQKcagc" title="OpenCam featured by Anthony Aguiar" />
+          </div>
+          <div class="aspect-video flex-shrink-0 w-[360px] min-w-[360px] sm:w-[520px] sm:min-w-[520px] lg:w-[640px] lg:min-w-[640px] snap-center">
+            <VideoPreview videoId="lQ6TuOEUAd4" title="OpenCam review by Little Walk Of Fame" />
+          </div>
+        </div>
+        <div class="mt-6 flex justify-center gap-4">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-white/20 bg-black/60 p-3 text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
+            data-video-prev
+            aria-label="Previous video"
+            disabled
+          >
+            <svg
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19 8 12l7-7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-white/20 bg-black/60 p-3 text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
+            data-video-next
+            aria-label="Next video"
+          >
+            <svg
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Features Section -->
+    <div class="mx-auto max-w-xl text-center mt-20">
+      <div>
+        <p
+          class="text-4xl tracking-tight font-medium text-white md:text-5xl font-display"
+        >
+          Why OpenCam?
+        </p>          <p
+          class="mt-4 text-lg text-na mx-auto tracking-tight text-slate-300"
+        >
+          Unlock your iPhone's true filmmaking potential with wider framing and professional controls.
+        </p>
+      </div>
+    </div>
+    <div>
+      <div class="mx-auto max-w-7xl pt-12">
+        <h2 class="sr-only">Features</h2>
+        <div
+          class="grid gap-12 grid-cols-1 lg:text-center md:grid-cols-2 lg:grid-cols-5"
+        >
+            <div class="text-center">
+              <div class="flex flex-col items-center">
+                <div
+                  class="items-center justify-center text-accent-500 bg-gray-800 rounded-xl flex h-16 w-16"
+                >
+                  <img
+                    src="/symbols/camera.metering.center.weighted.average.svg"
+                    alt="Camera metering icon"
+                    class="h-8 w-8"
+                    loading="lazy"
+                  />
+                </div>
+                <p
+                  class="mt-4 text-lg font-semibold leading-6 text-white font-display tracking-tight"
+                >
+                  Full sensor recording
+                </p>
+              </div>
+              <div class="mt-4 text-slate-300 text-sm">
+                Unlock your iPhone's full potential. Shoot in HD+ or 4K+ with true Apple Log, cinematic stabilisation, and 60 FPS fluidity.
+                <br>
+                <br>
+                On iPhone 17 and iPhone Air, use the entire square selfie sensor.
+              </div>
+              <div class="mt-6">
+                <a
+                  href="/comparisons/"
+                  class="inline-flex items-center justify-center font-medium rounded-full focus-visible:outline-orange-600 focus:outline-none bg-gradient-to-b from-orange-300 to-orange-500 duration-200 focus-visible:ring-orange-600 hover:brightness-110 hover:shadow-lg px-6 py-2 text-center text-sm text-white w-auto"
+                >
+                  Compare with iOS
+                </a>
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="flex flex-col items-center">
+                <div
+                  class="items-center justify-center text-accent-500 bg-gray-800 rounded-xl flex h-16 w-16"
+                >
+                  <img
+                    src="/symbols/dial.medium.fill.svg"
+                    alt="Control dial icon"
+                    class="h-8 w-8"
+                    loading="lazy"
+                  />
+                </div>
+                <p
+                  class="mt-4 text-lg font-semibold leading-6 text-white font-display tracking-tight"
+                >
+                  Pro manual controls
+                </p>
+              </div>
+              <div class="mt-4 text-slate-300 text-sm">
+                Fine-tune every detail — exposure, focus, white balance, shutter speed, and ISO.
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="flex flex-col items-center">
+                <div
+                  class="items-center justify-center text-accent-500 bg-gray-800 rounded-xl flex h-16 w-16"
+                >
+                  <img
+                    src="/symbols/folder.fill.svg"
+                    alt="Folder icon"
+                    class="h-8 w-8"
+                    loading="lazy"
+                  />
+                </div>
+                <p
+                  class="mt-4 text-lg font-semibold leading-6 text-white font-display tracking-tight"
+                >
+                  Clean file management
+                </p>
+              </div>
+              <div class="mt-4 text-slate-300 text-sm">
+                Avoid clutter in your photo library by only saving the videos you want.
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="flex flex-col items-center">
+                <div
+                  class="items-center justify-center text-accent-500 bg-gray-800 rounded-xl flex h-16 w-16"
+                >
+                  <img
+                    src="/symbols/square.2.layers.3d.fill.svg"
+                    alt="Layered square icon"
+                    class="h-8 w-8"
+                    loading="lazy"
+                  />
+                </div>
+                <p
+                  class="mt-4 text-lg font-semibold leading-6 text-white font-display tracking-tight"
+                >
+                  Instant LUT previews
+                </p>
+              </div>
+              <div class="mt-4 text-slate-300 text-sm">
+                Test your creative looks live on set. Preview LUTs in real time before hitting record so everyone sees the final vision.
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="flex flex-col items-center">
+                <div
+                  class="items-center justify-center text-accent-500 bg-gray-800 rounded-xl flex h-16 w-16"
+                >
+                  <img
+                    src="/symbols/externaldrive.fill.svg"
+                    alt="External drive icon"
+                    class="h-8 w-8"
+                    loading="lazy"
+                  />
+                </div>
+                <p
+                  class="mt-4 text-lg font-semibold leading-6 text-white font-display tracking-tight"
+                >
+                  External SSD recording
+                </p>
+              </div>
+              <div class="mt-4 text-slate-300 text-sm">
+                Capture straight to fast external storage for marathon shoots with no compromise on quality or capture length.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</section>
+<script type="module">
+  const setupCarousel = (root) => {
+    if (!root || root.dataset.carouselBound === 'true') {
+      return;
+    }
+
+    const scroller = root.querySelector('[data-video-scroller]');
+    const prevButton = root.querySelector('[data-video-prev]');
+    const nextButton = root.querySelector('[data-video-next]');
+    if (!scroller || !prevButton || !nextButton) {
+      return;
+    }
+
+    const items = Array.from(scroller.children);
+    if (items.length === 0) {
+      return;
+    }
+
+    root.dataset.carouselBound = 'true';
+
+    let positions = [];
+
+    const updatePositions = () => {
+      const rawPositions = items.map((item) => item.offsetLeft);
+      const baseOffset = rawPositions[0] ?? 0;
+      positions = rawPositions.map((pos) => pos - baseOffset);
+    };
+
+    const getActiveIndex = () => {
+      if (positions.length === 0) {
+        return 0;
+      }
+
+      const current = scroller.scrollLeft;
+      let closestIndex = 0;
+      let smallestDiff = Number.POSITIVE_INFINITY;
+
+      positions.forEach((pos, index) => {
+        const diff = Math.abs(current - pos);
+        if (diff < smallestDiff) {
+          smallestDiff = diff;
+          closestIndex = index;
+        }
+      });
+
+      return closestIndex;
+    };
+
+    const updateButtons = () => {
+      const index = getActiveIndex();
+      const atStart = scroller.scrollLeft <= 1;
+      const atEnd =
+        Math.abs(scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft) <= 1 ||
+        index >= items.length - 1;
+
+      prevButton.toggleAttribute('disabled', atStart);
+      nextButton.toggleAttribute('disabled', atEnd);
+    };
+
+    const scrollToIndex = (index) => {
+      if (index < 0 || index >= positions.length) {
+        return;
+      }
+
+      scroller.scrollTo({
+        left: positions[index],
+        behavior: 'smooth',
+      });
+    };
+
+    prevButton.addEventListener('click', () => {
+      const current = getActiveIndex();
+      const target = Math.max(0, current - 1);
+      if (target !== current) {
+        scrollToIndex(target);
+      }
+    });
+
+    nextButton.addEventListener('click', () => {
+      const current = getActiveIndex();
+      const target = Math.min(items.length - 1, current + 1);
+      if (target !== current) {
+        scrollToIndex(target);
+      }
+    });
+
+    scroller.addEventListener('scroll', () => {
+      window.requestAnimationFrame(updateButtons);
+    });
+
+    window.addEventListener('resize', () => {
+      updatePositions();
+      updateButtons();
+    });
+
+    updatePositions();
+    updateButtons();
+  };
+
+  const initCarousel = () => {
+    document
+      .querySelectorAll('[data-video-carousel-root]')
+      .forEach((root) => setupCarousel(root));
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCarousel, { once: true });
+  } else {
+    initCarousel();
+  }
+</script>

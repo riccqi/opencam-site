@@ -1,0 +1,98 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "OpenCam - Open Gate Recording on iPhone",
+  description = "Record Open Gate with professional controls, using the full camera sensor. Made for content creators and filmmakers.",
+} = Astro.props;
+
+const siteOrigin = Astro.site ?? Astro.url.origin;
+const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).toString();
+const socialImageUrl = new URL("/og-image.png", siteOrigin).toString();
+
+const structuredData = [{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "OpenCam",
+  url: new URL("/", siteOrigin).href,
+}, {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "OpenCam",
+  operatingSystem: "iOS 17 or later",
+  applicationCategory: "MultimediaApplication",
+  description,
+  url: new URL("/", siteOrigin).href,
+  image: socialImageUrl,
+  downloadUrl: "https://apps.apple.com/us/app/opencam-open-gate-camera/id6743316690",
+}];
+---
+
+<title>{title}</title>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<link rel="canonical" href={canonicalUrl} />
+<meta name="author" content="Richard Qi" />
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PJ06QBGDRS"></script>
+<script>
+  // @ts-ignore - Google Analytics global declarations
+  window.dataLayer = window.dataLayer || [];
+  // @ts-ignore - Google Analytics global function
+  function gtag(){dataLayer.push(arguments);}
+  // @ts-ignore - Google Analytics function call
+  gtag('js', new Date());
+  // @ts-ignore - Google Analytics function call
+  gtag('config', 'G-PJ06QBGDRS');
+</script>
+
+<!-- Primary Meta Tags -->
+<meta name="title" content={title} />
+<meta name="description" content={description} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:site_name" content="OpenCam" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:image:alt" content="OpenCam — Open Gate video recording on iPhone" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={socialImageUrl} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImageUrl} />
+
+<!-- Favicon -->
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<!-- <link rel="manifest" href="/site.webmanifest"> -->
+<link rel="mask-icon" href="/favicon.svg" color="#ffffff">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="theme-color" content="#ffffff">
+
+
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Alpine and the collapse plugin used by the navigation and FAQ -->
+<script defer src="https://unpkg.com/@alpinejs/collapse@3.15.12/dist/cdn.min.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.15.12/dist/cdn.min.js"></script>
+
+{Astro.url.pathname === "/" && <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
