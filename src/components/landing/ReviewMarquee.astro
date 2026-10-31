@@ -1,0 +1,164 @@
+---
+import { initials, socialProofItems } from "../../data/socialProof";
+
+// Same seven monogram tints the app uses, top to bottom. Colors go by position, so
+// neighboring cards never match.
+const gradients = [
+  ["#a8b5d9", "#7a87b8"], // blue-grey
+  ["#8ccc9e", "#4d9e6b"], // green
+  ["#ffb873", "#ed853d"], // orange
+  ["#fa9eb3", "#db6685"], // pink
+  ["#c29eeb", "#8f6bcc"], // purple
+  ["#80ccdb", "#4299b3"], // teal
+  ["#facf6b", "#e0a833"], // yellow
+];
+
+// Two rows, each with half the cards (and two of the videos). The second drifts the other way.
+const half = Math.ceil(socialProofItems.length / 2);
+const rows = [socialProofItems.slice(0, half), socialProofItems.slice(half)];
+---
+<div class="review-marquee relative left-1/2 w-screen max-w-none -translate-x-1/2">
+  <div class="flex flex-col gap-4" role="region" aria-label="Reviews and videos about OpenCam">
+    {rows.map((items, rowIndex) => (
+    <div class="review-marquee-viewport scrollbar-hidden">
+      <div class:list={["review-marquee-track", { "review-marquee-track-reverse": rowIndex === 1 }]} data-review-track>
+        {[0, 1].map((copy) => (
+          // The second copy sits right after the first: when the first has scrolled off,
+          // the second is in its place. It is hidden from assistive tech and the tab order,
+          // but its video cards still open on click, since half the time it is the one on screen.
+          <ul class="review-marquee-row" aria-hidden={copy === 1 ? "true" : undefined}>
+            {items.map((item) => (
+              <li class="w-72 shrink-0">
+                {item.kind === "review" ? (
+                  <figure class="flex h-60 flex-col rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+                    <figcaption class="sr-only">{item.quote.rating} out of 5 stars</figcaption>
+                    <p class="line-clamp-2 text-sm font-semibold text-white">{item.quote.title}</p>
+                    <div class="mt-1.5 flex gap-0.5 text-orange-400" aria-hidden="true">
+                      {[0, 1, 2, 3, 4].map((index) => (
+                        <svg viewBox="0 0 20 20" class="h-3 w-3" fill={index < item.quote.rating ? "currentColor" : "none"} stroke="currentColor" stroke-width="1.5">
+                          <path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9L10 1.5z" stroke-linejoin="round" />
+                        </svg>
+                      ))}
+                    </div>
+                    <blockquote class="mt-3 line-clamp-4 text-sm text-slate-300">{item.quote.body}</blockquote>
+                    <div class="mt-auto flex items-center gap-2 pt-4">
+                      <span
+                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                        style={`background: linear-gradient(${gradients[item.colorIndex % gradients.length].join(", ")})`}
+                        aria-hidden="true"
+                      >{initials(item.quote.author)}</span>
+                      <span class="truncate text-xs font-medium text-slate-400">{item.quote.author}</span>
+                    </div>
+                  </figure>
+                ) : (
+                  <a
+                    href={`https://www.youtube.com/watch?v=${item.video.youTubeID}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    tabindex={copy === 1 ? -1 : undefined}
+                    class="group flex h-60 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
+                    aria-label={`${item.video.title}, by ${item.video.channel} (opens YouTube)`}
+                  >
+                    <span class="relative block h-36 shrink-0 overflow-hidden bg-zinc-900">
+                      <img
+                        src={`https://i.ytimg.com/vi/${item.video.youTubeID}/hqdefault.jpg`}
+                        alt=""
+                        width="480"
+                        height="360"
+                        loading="lazy"
+                        decoding="async"
+                        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                      <span class="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition group-hover:bg-orange-500">
+                          <svg viewBox="0 0 24 24" class="ml-0.5 h-5 w-5" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.6-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z" /></svg>
+                        </span>
+                      </span>
+                    </span>
+                    <span class="flex flex-col gap-1.5 px-4 py-3">
+                      <span class="line-clamp-2 text-sm font-semibold text-white">{item.video.title}</span>
+                      <span class="flex items-center gap-1.5 text-xs text-slate-400">
+                        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0 text-red-500" fill="currentColor" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z" /></svg>
+                        <span class="truncate">{item.video.channel}</span>
+                      </span>
+                    </span>
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .review-marquee-viewport {
+    overflow: hidden;
+    /* Cards fade in and out at the edges instead of being cut off. */
+    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  }
+
+  .review-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: review-marquee var(--marquee-duration, 160s) linear infinite;
+  }
+
+  /* Each row carries its trailing gap as padding, so the two copies are exactly half the
+     track each and sliding by -50% loops seamlessly. */
+  .review-marquee-row {
+    display: flex;
+    gap: 1rem;
+    padding-right: 1rem;
+  }
+
+  .review-marquee-track-reverse {
+    animation-direction: reverse;
+  }
+
+  /* Keeps moving under the mouse; only holds still while a card has keyboard focus, so
+     it doesn't slide away from someone tabbing to it. */
+  .review-marquee-viewport:has(:focus-visible) .review-marquee-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes review-marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* With reduced motion it becomes an ordinary horizontal scroll row. */
+  @media (prefers-reduced-motion: reduce) {
+    .review-marquee-viewport {
+      overflow-x: auto;
+      mask-image: none;
+    }
+
+    .review-marquee-track {
+      animation: none;
+      padding-inline: 2rem;
+    }
+
+    .review-marquee-row[aria-hidden] {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Pixels per second, so the pace stays the same however many cards there are.
+  const SPEED = 40;
+
+  // Each row gets its own duration from its own width.
+  document.querySelectorAll<HTMLElement>("[data-review-track]").forEach((track) => {
+    const setDuration = () => {
+      track.style.setProperty("--marquee-duration", `${track.scrollWidth / 2 / SPEED}s`);
+    };
+    setDuration();
+    new ResizeObserver(setDuration).observe(track);
+  });
+</script>

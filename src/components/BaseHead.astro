@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = "OpenCam - Open Gate Recording on iPhone",
-  description = "Record Open Gate with professional controls, using the full camera sensor. Made for content creators and filmmakers.",
+  title = "OpenCam - Open Gate Camera & Teleprompter for iPhone",
+  description = "Record Open Gate video with the full camera sensor, pro controls and a built-in teleprompter that follows your voice. Made for filmmakers and creators.",
 } = Astro.props;
 
 const siteOrigin = Astro.site ?? Astro.url.origin;
@@ -30,6 +30,14 @@ const structuredData = [{
   url: new URL("/", siteOrigin).href,
   image: socialImageUrl,
   downloadUrl: "https://apps.apple.com/us/app/opencam-open-gate-camera/id6743316690",
+  featureList: [
+    "Open Gate recording with the full iPhone camera sensor",
+    "Apple Log and ProRes RAW recording",
+    "Pro manual controls for exposure, focus, white balance, shutter speed, ISO and aperture",
+    "Built-in teleprompter that scrolls or follows your voice with on-device speech recognition",
+    "Live LUT previews",
+    "Recording to external SSDs",
+  ],
 }];
 ---
 

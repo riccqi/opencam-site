@@ -1,80 +1,153 @@
 ---
-import { Image } from "astro:assets";
-import hero from "../../../public/hero.png";
+import { Picture } from "astro:assets";
+import header from "../../assets/header.png";
+
+const laurel = (side: "leading" | "trailing") =>
+  `background: currentColor; -webkit-mask: url(/laurel.${side}.svg) center / contain no-repeat; mask: url(/laurel.${side}.svg) center / contain no-repeat;`;
 ---
-<section>
-  <div
-    class="mx-auto w-full lg:px-24 max-w-7xl md:px-8 items-center px-8 pb-8">
-    <div class="text-center max-w-4xl mx-auto mt-12">
-      <h1
-        style="font-family: Inter, sans-serif"
-        class="text-5xl tracking-tight font-bold text-zinc-100 md:text-6xl">
-        Open Gate Recording <br>
-        <span class="flex items-center justify-center gap-4">
-          on 
-          <span class="flex items-center gap-1">
-            <img 
-              src="/symbols/apple.logo.svg" 
-              alt="Apple" 
-              class="h-[1em] w-auto inline-block text-zinc-100"
-              style="transform: translateY(-4px);"
-            />
-            iPhone
-          </span>
-        </span>
-      </h1>
-
-      <!-- Star Rating -->
-     
-      <p class="text-zinc-300 md:text-xl max-w-2xl mt-4 mx-auto text-base">
-        Use your iPhone's full camera sensor to capture wider, more expansive footage with an IMAX-like feel.
-      </p>
-
-      <div class="flex flex-col items-center mt-6">
-        <!-- Large 4.5/5 Rating -->
-        <div class="flex items-center justify-center mb-2">
-          <div
-            class="w-12 h-12 md:w-16 md:h-16 flex-shrink-0"
-            style="background: linear-gradient(135deg, #FFD700 10%, #ffbb3e 20%); -webkit-mask-image: url(/laurel.leading.svg); mask-image: url(/laurel.leading.svg); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;"
-            aria-label="Laurel decoration"
-          ></div>
-          <div class="text-center">
-            <p class="text-lg md:text-2xl font-extrabold text-white">4.5 <span class="text-sm font-bold text-zinc-300">/ 5</span></p>
-            <p class="text-gray-300 text-xs font-medium mt-1 leading-none">Used by 15k+ creators<br>around the world</p>
-          </div>
-          <div
-            class="w-12 h-12 md:w-16 md:h-16 flex-shrink-0"
-            style="background: linear-gradient(135deg, #FFD700 10%, #ffbb3e 20%); -webkit-mask-image: url(/laurel.trailing.svg); mask-image: url(/laurel.trailing.svg); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;"
-            aria-label="Laurel decoration"
-          ></div>
-        </div>
-      </div>
-    </div>
-    <div class="flex flex-col items-center mt-10">
-      <div class="flex justify-center gap-2">
-        <a
-          href="https://apps.apple.com/us/app/opencam-open-gate-camera/id6743316690"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-block rounded-lg transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]"
-        >
-          <img
-            src="/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg"
-            alt="Download on the App Store"
-            class="h-12 md:h-16 w-auto"
-          />
-        </a>
-      </div>
-      <p class="text-zinc-400 text-sm mt-2 text-center">
-        Supports iOS 17+, iPhone 12 and newer.
-      </p>
-    </div>
-
-
-    <div class="relative max-w-3xl mx-auto items-center py-12 pb-12">
-      <div class="rounded-xl">
-        <Image src={hero} alt="OpenCam camera interface for Open Gate video recording on iPhone" widths={[384, 768, 1536]} sizes="(max-width: 832px) calc(100vw - 64px), 768px" format="webp" loading="eager" fetchpriority="high" class="w-full h-auto max-w-3xl object-contain mx-auto" />
-      </div>
-    </div>
+<!-- The background continues the sky at the bottom of the image, left to right, so the
+     text below the wordmark sits in the same sky. -->
+<section class="hero relative w-full overflow-hidden">
+  <!-- Darkens the top of the sky a little, so the navigation floating over it stays legible. -->
+  <div class="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-slate-900/35 to-transparent" aria-hidden="true"></div>
+  <div class="hero-frame relative w-full">
+    <Picture
+      src={header}
+      alt="OpenCam camera interface on an iPhone in landscape, filming the New York skyline"
+      widths={[640, 960, 1280, 1920, 2560, 3840]}
+      sizes="100vw"
+      formats={["avif", "webp"]}
+      fallbackFormat="jpg"
+      quality={75}
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      class="absolute inset-0 h-full w-full object-cover object-center"
+    />
+    <!-- The animated header plays over the still, its first frame, which shows until the
+         video is ready (and stays put with Reduce Motion on). -->
+    <video
+      class="absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-opacity duration-500"
+      muted
+      loop
+      playsinline
+      preload="none"
+      aria-hidden="true"
+      data-hero-video
+    >
+      <!-- The browser takes the first source that matches the screen and that it can decode:
+           AV1 is smallest for the quality, HEVC covers Safari, H.264 plays everywhere. -->
+      <source src="/videos/header-1920-av1.mp4" type='video/mp4; codecs="av01.0.08M.08"' media="(max-width: 767px)" />
+      <source src="/videos/header-1920-hevc.mp4" type='video/mp4; codecs="hvc1.1.6.L120.B0"' media="(max-width: 767px)" />
+      <source src="/videos/header-1920-h264.mp4" type="video/mp4" media="(max-width: 767px)" />
+      <source src="/videos/header-3840-av1.mp4" type='video/mp4; codecs="av01.0.12M.08"' />
+      <source src="/videos/header-3840-hevc.mp4" type='video/mp4; codecs="hvc1.1.6.L153.B0"' />
+      <source src="/videos/header-2560-h264.mp4" type="video/mp4" />
+    </video>
   </div>
+
+  <!-- Pulled up into the sky just below the OPENCAM wordmark (it ends 87% down the frame). -->
+  <div class="hero-content relative z-10 mx-auto flex max-w-4xl flex-col items-center px-8 text-center">
+    <h1
+      style="font-family: Inter, sans-serif"
+      class="text-lg font-semibold tracking-tight text-slate-800 md:text-2xl">
+      Open Gate Recording for pro filmmaking and creators&#32;<span class="inline-flex items-baseline gap-2 whitespace-nowrap">
+        on
+        <span class="inline-flex items-baseline gap-1">
+          <span
+            class="inline-block h-[0.85em] w-[0.66em] bg-current"
+            style="-webkit-mask: url(/symbols/apple.logo.svg) center / contain no-repeat; mask: url(/symbols/apple.logo.svg) center / contain no-repeat;"
+            role="img"
+            aria-label="Apple"
+          ></span>
+          iPhone
+        </span>
+      </span>
+    </h1>
+
+    <div class="mt-4 flex items-center justify-center">
+      <div class="h-12 w-12 flex-shrink-0 text-slate-900 md:h-16 md:w-16" style={laurel("leading")} aria-hidden="true"></div>
+      <div class="text-center">
+        <p class="text-lg font-extrabold text-slate-900 md:text-2xl">4.5 <span class="text-sm font-bold text-slate-600">/ 5</span></p>
+        <p class="mt-1 text-xs font-medium leading-none text-slate-700">Used by 15k+ creators<br>around the world</p>
+      </div>
+      <div class="h-12 w-12 flex-shrink-0 text-slate-900 md:h-16 md:w-16" style={laurel("trailing")} aria-hidden="true"></div>
+    </div>
+
+    <a
+      href="https://apps.apple.com/us/app/opencam-open-gate-camera/id6743316690"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="mt-6 inline-block rounded-lg transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.6)]"
+    >
+      <img
+        src="/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg"
+        alt="Download on the App Store"
+        width="120"
+        height="40"
+        class="h-12 md:h-14 w-auto"
+      />
+    </a>
+    <p class="mt-2 text-xs text-slate-600 md:text-sm">
+      Supports iOS 17+, iPhone 12 and newer.
+    </p>
+  </div>
+
+  <!-- Fades the sky into the page's dark background, so the hero runs into the next section.
+       It starts behind the text above, where it is still nearly clear, so it has no visible edge. -->
+  <div class="h-48 md:h-72" aria-hidden="true"></div>
+  <div class="hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-[17rem] md:h-[24rem]" aria-hidden="true"></div>
 </section>
+
+<style>
+  .hero {
+    /* Fills the screen below the navigation, but never so tall for its width that the sides
+       crop into the phone (the middle 53% of the frame), nor so short that the top and bottom
+       crop off the wordmark. */
+    --hero-height: max(calc(100vw * 1646 / 3840), min(100svh, 70vw));
+    /* The navigation floats over the top. Where the phone (10% down the frame) would sit
+       under it, the frame moves down and a band of the image's top sky fills the gap. */
+    --hero-offset: max(0px, calc(4.5rem - var(--hero-height) * 0.1));
+    background:
+      linear-gradient(to right, #89b7e1, #7eaede 30%, #71add9 50%, #6da8d4 70%, #659ecb) top / 100% calc(var(--hero-offset) + 2rem) no-repeat,
+      linear-gradient(to right, #d2ebf0, #bedee5 30%, #b6d6dd 50%, #accfd8 70%, #a2c4d4);
+  }
+
+  .hero-frame {
+    height: var(--hero-height);
+    margin-top: var(--hero-offset);
+    /* Fades the image's top and bottom edges into the matching background bands. */
+    mask-image: linear-gradient(to bottom, transparent, black 2rem, black 90%, transparent);
+  }
+
+  .hero-content {
+    margin-top: calc(var(--hero-height) * -0.1);
+  }
+
+  /* Smoothstep easing: a linear ramp shows a hard line where it starts and a grey band in the middle. */
+  .hero-fade {
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0),
+      rgb(0 0 0 / 0.028) 10%,
+      rgb(0 0 0 / 0.104) 20%,
+      rgb(0 0 0 / 0.216) 30%,
+      rgb(0 0 0 / 0.352) 40%,
+      rgb(0 0 0 / 0.5) 50%,
+      rgb(0 0 0 / 0.648) 60%,
+      rgb(0 0 0 / 0.784) 70%,
+      rgb(0 0 0 / 0.896) 80%,
+      rgb(0 0 0 / 0.972) 90%,
+      var(--color-bg-dark)
+    );
+  }
+</style>
+
+<script>
+  const video = document.querySelector<HTMLVideoElement>("[data-hero-video]");
+  if (video && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    video.muted = true;
+    video.addEventListener("playing", () => video.classList.remove("opacity-0"), { once: true });
+    video.play().catch(() => {});
+  }
+</script>

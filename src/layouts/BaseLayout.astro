@@ -6,9 +6,11 @@ import Footer from "../components/global/Footer.astro";
 interface Props {
   title?: string;
   description?: string;
+  /** Floats the navigation over the first section, for pages that open with a full-bleed hero. */
+  overlayNav?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, overlayNav = false } = Astro.props;
 ---
 <html
   lang="en"
@@ -18,8 +20,8 @@ const { title, description } = Astro.props;
     <BaseHead {title} {description} />
   </head>
   <body class="bg-[var(--color-bg-dark)] text-white flex flex-col min-h-svh">
-    <Navigation/>
-    <main class="grow"><slot /></main>
+    <Navigation overlay={overlayNav} />
+    <main class:list={["grow", overlayNav && "relative"]}><slot /></main>
     <Footer/>
   </body>
 </html>

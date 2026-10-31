@@ -176,6 +176,51 @@ With Apple Log and Open Gate recording, you’ll preserve every stop of dynamic 
             class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
           >
             <span
+              >Does OpenCam have a teleprompter?</span
+            >
+            <svg
+              style="min-width: 20px; min-height: 20px; width: 20px; height: 20px;"
+              class="duration-300 ease-out text-accent-500 flex-shrink-0 !shrink-0"
+              :class="{ '-rotate-[45deg]': activeAccordion==id }"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v12m6-6H6"></path></svg
+            >
+          </button>
+          <div
+            :id="`${id}-panel`"
+            role="region"
+            :aria-labelledby="`${id}-trigger`"
+            x-show="activeAccordion==id"
+            x-collapse=""
+            style="display: none;"
+          >
+            <div class="p-4 pt-2 text-slate-300">
+              Yes. Paste your script and it appears over the camera preview while you record, so you can read to camera without extra gear. It can scroll at a steady pace, or follow your voice using on-device speech recognition on iOS 26 and later, which works offline once your language is downloaded. You can change the text size, width and position, and the script is never recorded into your video.
+            </div>
+          </div>
+        </div>
+
+        <div
+          x-data="{ id: $id('accordion') }"
+          :class="{ 'text-white': activeAccordion==id, 'text-slate-300 hover:text-accent-500': activeAccordion!=id }"
+          class="cursor-pointer group text-slate-300 hover:text-accent-500"
+        >
+          <button
+            type="button"
+            @click="setActiveAccordion(id)"
+            :id="`${id}-trigger`"
+            :aria-expanded="activeAccordion == id"
+            :aria-controls="`${id}-panel`"
+            class="flex items-center justify-between w-full p-4 pb-1 text-left font-medium select-none"
+          >
+            <span
               >How is my data handled?</span
             >
             <svg
@@ -202,7 +247,7 @@ With Apple Log and Open Gate recording, you’ll preserve every stop of dynamic 
             style="display: none;"
           >
             <div class="p-4 pt-2 text-slate-300">
-              OpenCam’s camera functionality processes recordings locally on your iPhone and works offline. If you separately sign up for optional update emails, we collect your email address and subscription records as described in our privacy policy.
+              OpenCam’s camera functionality processes recordings locally on your iPhone and works offline.
             </div>
           </div>
         </div>

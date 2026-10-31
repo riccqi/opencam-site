@@ -1,12 +1,19 @@
 ---
 import { Image } from "astro:assets";
 import logo from "../../../public/opencam-full.png";
+
+interface Props {
+  /** Floats the bar over the page's first section instead of giving it its own black band. */
+  overlay?: boolean;
+}
+
+const { overlay = false } = Astro.props;
 ---
-<section class="bg-[var(--color-bg-dark)] border-b border-gray-900">
+<section class:list={overlay ? "absolute inset-x-0 top-0 z-30" : "bg-[var(--color-bg-dark)] border-b border-gray-900"}>
   <div class="w-full mx-auto md:px-12 px-8 max-w-7xl lg:px-16">
     <div
       x-data="{ open: false }"
-      class="relative flex flex-col w-full py-3 mx-auto bg-[var(--color-bg-dark)] md:items-center md:justify-between md:flex-row md:px-6">
+      class:list={["relative flex flex-col w-full py-3 mx-auto md:items-center md:justify-between md:flex-row md:px-6", !overlay && "bg-[var(--color-bg-dark)]"]}>
       <div class="flex flex-row items-center justify-between lg:justify-start">
         <!-- <a href="/" class=" text-black inline-flex items-center gap-3">
          <svg class="h-4" viewBox="0 0 78 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M55.5 0H77.5L58.5 32H36.5L55.5 0Z" class="ccustom" fill="#283CFF"></path> <path d="M35.5 0H51.5L32.5 32H16.5L35.5 0Z" class="ccompli1" fill="#5263FF"></path> <path d="M19.5 0H31.5L12.5 32H0.5L19.5 0Z" class="ccompli2" fill="#808CFF"></path> </svg>
@@ -23,7 +30,7 @@ import logo from "../../../public/opencam-full.png";
           :aria-expanded="open"
           :aria-label="open ? 'Close navigation' : 'Open navigation'"
           aria-controls="primary-navigation"
-          class="inline-flex items-center justify-center p-2 text-gray-400 hover:text-white focus:outline-none focus:text-white md:hidden">
+          class:list={["inline-flex items-center justify-center p-2 hover:text-white focus:outline-none focus:text-white md:hidden", overlay ? "text-white" : "text-gray-400"]}>
           <svg
             class="w-6 h-6"
             stroke="currentColor"
@@ -49,7 +56,7 @@ import logo from "../../../public/opencam-full.png";
       <nav
         id="primary-navigation"
         :class="{'flex': open, 'hidden': !open}"
-        class="flex-col items-center flex-grow hidden md:pb-0 md:flex md:justify-end md:flex-row">
+        class:list={["flex-col items-center flex-grow hidden md:pb-0 md:flex md:justify-end md:flex-row", overlay && "mt-2 rounded-xl bg-black/75 py-2 backdrop-blur md:mt-0 md:rounded-none md:bg-transparent md:py-0 md:backdrop-blur-none"]}>
         <a
           class="px-2 lg:px-6 py-2 md:px-3 text-sm font-medium text-white hover:text-accent-400 lg:ml-auto"
           href="/#features">Features</a
