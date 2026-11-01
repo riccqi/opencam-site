@@ -1,11 +1,11 @@
 ---
 import ReviewMarquee from "./ReviewMarquee.astro";
 ---
-<section id="features">
+<section>
   <div
-    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-12 scroll-mt-12"
+    class="mx-auto w-full lg:px-24 max-w-7xl md:px-12 items-center px-8 py-12"
   >
-    <!-- YouTube Feature Section (moved above features) -->
+    <!-- Reviews and creator videos -->
     <div class="mx-auto max-w-xl text-center">
       <p
         class="text-4xl tracking-tight font-medium text-white md:text-5xl font-display"
@@ -22,14 +22,15 @@ import ReviewMarquee from "./ReviewMarquee.astro";
       <ReviewMarquee />
     </div>
 
-    <!-- Key Features Section -->
-    <div class="mx-auto max-w-xl text-center mt-20">
+    <!-- Key Features Section: the navigation's Features link lands here. -->
+    <div id="features" class="mx-auto max-w-xl text-center mt-20 scroll-mt-12">
       <div>
-        <p
+        <h2
           class="text-4xl tracking-tight font-medium text-white md:text-5xl font-display"
         >
-          Why OpenCam?
-        </p>          <p
+          Features
+        </h2>
+        <p
           class="mt-4 text-lg text-na mx-auto tracking-tight text-slate-300"
         >
           Unlock your iPhone's true filmmaking potential with wider framing and professional controls.
@@ -38,7 +39,6 @@ import ReviewMarquee from "./ReviewMarquee.astro";
     </div>
     <div>
       <div class="mx-auto max-w-7xl pt-12">
-        <h2 class="sr-only">Features</h2>
         <div
           class="grid gap-12 grid-cols-1 lg:text-center md:grid-cols-2 lg:grid-cols-3"
         >
